@@ -1,0 +1,27 @@
+Subject: We redesigned your website
+
+Hi {first_name},
+
+I came across {agency_name} while reviewing real estate agencies and noticed that your website's design feels a bit
+dated compared to what today's buyers expect.
+
+Rather than just pointing it out, we actually redesigned your homepage so you can see what a more modern, 
+conversion-focused version could look like.
+
+Preview: https://real-estate-websual.vercel.app
+
+Our goal wasn't just to make it look better—we focused on creating a cleaner experience that helps visitors find 
+properties faster and encourages more enquiries.
+
+If you'd like, I'd be happy to walk you through the changes or discuss how we could create something similar for
+your business.
+
+You can also learn more about us at https://www.websual.agency
+
+Looking forward to hearing your thoughts.
+
+Best regards,
+Agency Name: Websual
+Agency Website: https://www.websual.agency
+Email: contact@websual.agency
+WhatsApp: +91 9608026882

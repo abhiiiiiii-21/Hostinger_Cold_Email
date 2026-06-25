@@ -1,0 +1,21 @@
+Subject: We redesigned your website
+
+Hi {first_name},
+
+I recently came across **{agency_name}** while reviewing real estate agencies, but unfortunately I wasn't able to access your website.
+
+Rather than just reaching out about the issue, we created a free redesign to show what a modern, high-performing website for your business could look like.
+
+**Preview:** https://real-estate-websual.vercel.app
+
+Whether the issue was temporary or not, having a fast and reliable website is important for ensuring potential clients can always reach you.
+
+If you'd like, I'd be happy to walk you through the redesign or discuss how we could create something similar for your business.
+
+Learn more about us at https://www.websual.agency
+
+Best regards,
+Agency Name: Websual
+Agency Website: https://www.websual.agency
+Email: contact@websual.agency
+WhatsApp: +91 9608026882

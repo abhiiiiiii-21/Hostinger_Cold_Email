@@ -1,0 +1,21 @@
+Subject : We redesigned your website
+
+Hi {first_name},
+
+I recently came across **{agency_name}** while reviewing real estate agencies and noticed a few SEO opportunities that could help more local buyers discover your business through Google.
+
+Rather than just sharing feedback, we created a free search friendly redesign to show how your website could be better structured for both visitors and search engines.
+
+**Preview:** https://real-estate-websual.vercel.app
+
+The redesign focuses on improving your site's SEO foundation while maintaining a clean experience that helps convert visitors into enquiries.
+
+If you'd like, I'd be happy to walk you through the changes or discuss how we could help improve your website's search visibility.
+
+Learn more about us at https://www.websual.agency
+
+Best regards,
+Agency Name: Websual
+Agency Website: https://www.websual.agency
+Email: contact@websual.agency
+WhatsApp: +91 9608026882
