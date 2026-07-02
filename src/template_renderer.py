@@ -14,7 +14,8 @@ from typing import Dict
 # when new columns or placeholders are added.
 PLACEHOLDER_MAP: Dict[str, str] = {
     "First Name": "first_name",
-    "Company Name": "agency_name",
+    "Company Name": "company_name",
+    "City": "city",
     "Website": "website",
     "Email": "email",
 }

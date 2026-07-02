@@ -1,21 +1,21 @@
-Subject: We redesigned your website
+Subject: {company_name}'s website wasn't loading
 
 Hi {first_name},
 
-I recently came across **{agency_name}** while reviewing real estate agencies, but unfortunately I wasn't able to access your website.
+I was checking out realtors in {city} and tried to pull up {company_name}'s website,
+but it wouldn't load for me.
 
-Rather than just reaching out about the issue, we created a free redesign to show what a modern, high-performing website for your business could look like.
+Might just be on my end, but if other potential buyers are hitting the same issue, it
+could be costing you leads without you knowing.
 
-**Preview:** https://real-estate-websual.vercel.app
+I put together a quick example of what a fast, modern site could look like for a realtor
+like yourself: https://real-estate-websual.vercel.app
 
-Whether the issue was temporary or not, having a fast and reliable website is important for ensuring potential clients can always reach you.
+Here's a similar project we recently completed for another client, if you want a real
+reference point: https://websual-christopher.vercel.app/
 
-If you'd like, I'd be happy to walk you through the redesign or discuss how we could create something similar for your business.
-
-Learn more about us at https://www.websual.agency
+Happy to take a quick look at what's going on with your site too, no charge, if useful.
 
 Best regards,
-Agency Name: Websual
-Agency Website: https://www.websual.agency
-Email: contact@websual.agency
-WhatsApp: +91 9608026882
+Websual
+https://www.websual.agency

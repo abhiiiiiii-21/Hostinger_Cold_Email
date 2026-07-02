@@ -1,26 +1,17 @@
-Subject: We redesigned your website
+Subject: {company_name}: design + Google, both fixable
 
 Hi {first_name},
 
-I recently came across {agency_name} while reviewing real estate agencies and noticed your
-website could benefit from a more modern design and a few SEO improvements to help more
-local buyers find you online.
+Checking out realtors in {city}, and {company_name}'s site had two things that stood
+out: the design feels outdated, and it's likely missing out on local Google traffic.
 
-Rather than just sharing feedback, we created a free redesign to show what a cleaner, search-
-friendly version could look like.
+Here's a quick example showing both fixed: https://real-estate-websual.vercel.app
 
-Preview: https://real-estate-websual.vercel.app
+And here's a similar project we recently delivered for another client:
+https://websual-christopher.vercel.app
 
-The redesign focuses on improving user experience, increasing lead generation, and building a
-stronger SEO foundation.
-
-If you'd like, I'd be happy to walk you through the changes or discuss how we could create
-something similar for your business.
-
-Learn more about us at https://www.websual.agency
+No pressure, just thought it might be worth 5 minutes if you're open to it.
 
 Best regards,
-Agency Name: Websual
-Agency Website: https://www.websual.agency
-Email: contact@websual.agency
-WhatsApp: +91 9608026882
+Websual
+https://www.websual.agency

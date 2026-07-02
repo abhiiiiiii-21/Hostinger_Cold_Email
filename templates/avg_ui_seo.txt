@@ -1,26 +1,19 @@
-Subject : We redesigned your website
+Subject: {company_name}'s site: two quick opportunities
 
 Hi {first_name},
 
-I recently came across {agency_name} while reviewing real estate agencies. Your website has a
-solid foundation, but I noticed a few opportunities to improve both the user experience and its
-visibility on Google.
+Looking into realtors around {city}, and {company_name}'s site stood out as having good
+bones, but I noticed a couple of gaps: layout/flow, and how it's set up for Google
+search.
 
-Rather than just sharing feedback, we created a free redesign to show what a more modern,
-search-friendly version could look like.
+Put together an example addressing both: https://real-estate-websual.vercel.app
 
-Preview: https://real-estate-websual.vercel.app
+Here's a similar project we recently finished for another client, for reference:
+https://websual-christopher.vercel.app
 
-The redesign focuses on a cleaner experience for visitors while improving the site's foundation
-for better search visibility and lead generation.
-
-If you'd like, I'd be happy to walk you through the changes or discuss how we could create
-something similar for your business.
-
-Learn more about us at https://www.websual.agency
+Let me know if it's worth a quick conversation, or feel free to ignore if it's not a
+priority right now.
 
 Best regards,
-Agency Name: Websual
-Agency Website: https://www.websual.agency
-Email: contact@websual.agency
-WhatsApp: +91 9608026882
+Websual
+https://www.websual.agency

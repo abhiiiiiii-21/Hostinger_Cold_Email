@@ -1,27 +1,19 @@
-Subject: We redesigned your website
+Subject: A thought on {company_name}'s website
 
 Hi {first_name},
 
-I recently came across {agency_name} while reviewing real estate agencies. Your website has a solid foundation, but
-I noticed a few opportunities to make it feel more modern and improve how visitors engage with it.
+I came across {company_name} while looking into realtors in {city}. Solid site overall,
+but I think a few tweaks to layout and flow could help turn more visitors into actual
+inquiries.
 
-Rather than simply sharing feedback, we created a free redesign to show what a cleaner, more conversion-focused 
-version could look like.
+Here's an example of the kind of cleaner, more conversion-focused design I mean:
+https://real-estate-websual.vercel.app
 
-Preview: https://real-estate-websual.vercel.app
+And here's a similar redesign we recently completed for another realtor:
+https://websual-christopher.vercel.app
 
-The goal wasn't to completely reinvent your website it was to enhance the overall user experience, make property 
-browsing more intuitive, and help turn more visitors into enquiries.
-
-If you'd like, I'd be happy to walk you through the changes or discuss how we could create something similar for 
-your business.
-
-You can learn more about us at https://www.websual.agency
-
-Looking forward to hearing your thoughts.
+If it's not for you, no worries at all, just wanted to flag it in case it's useful.
 
 Best regards,
-Agency Name: Websual
-Agency Website: https://www.websual.agency
-Email: contact@websual.agency
-WhatsApp: +91 9608026882
+Websual
+https://www.websual.agency

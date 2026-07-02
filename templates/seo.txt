@@ -1,21 +1,18 @@
-Subject : We redesigned your website
+Subject: {company_name} and Google search
 
 Hi {first_name},
 
-I recently came across **{agency_name}** while reviewing real estate agencies and noticed a few SEO opportunities that could help more local buyers discover your business through Google.
+Was doing some research on realtors in {city} and noticed {company_name}'s site isn't
+showing up well for searches buyers actually use, like "homes for sale in {city}."
 
-Rather than just sharing feedback, we created a free search friendly redesign to show how your website could be better structured for both visitors and search engines.
+Put together a quick example of a more search-optimized layout, if you want to see what
+that could look like: https://real-estate-websual.vercel.app
 
-**Preview:** https://real-estate-websual.vercel.app
+Here's a similar project we recently delivered for another client:
+https://websual-christopher.vercel.app
 
-The redesign focuses on improving your site's SEO foundation while maintaining a clean experience that helps convert visitors into enquiries.
-
-If you'd like, I'd be happy to walk you through the changes or discuss how we could help improve your website's search visibility.
-
-Learn more about us at https://www.websual.agency
+No pressure either way, just thought it might be worth a look.
 
 Best regards,
-Agency Name: Websual
-Agency Website: https://www.websual.agency
-Email: contact@websual.agency
-WhatsApp: +91 9608026882
+Websual
+https://www.websual.agency
