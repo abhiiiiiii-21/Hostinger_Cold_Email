@@ -32,8 +32,8 @@ def process_lead(lead: Dict[str, str], index: int, sent_emails: Set[str]) -> Non
         index: The 1-based index of this lead (for display).
         sent_emails: Set of already sent emails to avoid duplicates.
     """
-    company = lead.get('Company Name', 'Unknown')
-    email = lead.get('Email', '').strip()
+    company = lead.get('company name', 'Unknown')
+    email = lead.get('email', '').strip()
     
     print("=" * 70)
     print(f"Lead #{index}")
@@ -50,7 +50,7 @@ def process_lead(lead: Dict[str, str], index: int, sent_emails: Set[str]) -> Non
         print("=" * 70 + "\n")
         return
 
-    review = lead.get("Website Review", "")
+    review = lead.get("website review", "")
     print(f"Review   : {review}")
     
     issues = classify(review)

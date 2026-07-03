@@ -13,11 +13,11 @@ from typing import Dict
 # This keeps the mapping in one place, making it easy to update
 # when new columns or placeholders are added.
 PLACEHOLDER_MAP: Dict[str, str] = {
-    "First Name": "first_name",
-    "Company Name": "company_name",
-    "City": "city",
-    "Website": "website",
-    "Email": "email",
+    "first name": "first_name",
+    "company name": "company_name",
+    "city": "city",
+    "website": "website",
+    "email": "email",
 }
 
 

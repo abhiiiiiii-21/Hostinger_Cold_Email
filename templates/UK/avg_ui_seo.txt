@@ -1,0 +1,19 @@
+Subject: {company_name}'s site: two quick opportunities
+
+Hi {first_name},
+
+Looking into realtors around {city}, and {company_name}'s site stood out as having good
+bones, but I noticed a couple of gaps: layout/flow, and how it's set up for Google
+search.
+
+Put together an example addressing both: https://real-estate-websual.vercel.app
+
+Here's a similar project we recently finished for another client, for reference:
+https://websual-christopher.vercel.app
+
+Let me know if it's worth a quick conversation, or feel free to ignore if it's not a
+priority right now.
+
+Best regards,
+Websual
+https://www.websual.agency

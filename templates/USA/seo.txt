@@ -1,0 +1,18 @@
+Subject: {company_name} and Google search
+
+Hi {first_name},
+
+Was doing some research on realtors in {city} and noticed {company_name}'s site isn't
+showing up well for searches buyers actually use, like "homes for sale in {city}."
+
+Put together a quick example of a more search-optimized layout, if you want to see what
+that could look like: https://real-estate-websual.vercel.app
+
+Here's a similar project we recently delivered for another client,
+Website: https://websual-christopher.vercel.app
+
+No pressure either way, just thought it might be worth a look.
+
+Best regards,
+Websual
+https://www.websual.agency

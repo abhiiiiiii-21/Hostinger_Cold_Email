@@ -1,4 +1,6 @@
+fastapi
+uvicorn
+python-multipart
 pandas
 python-dotenv
-
 groq
