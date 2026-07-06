@@ -22,6 +22,7 @@ const API_BASE = "http://127.0.0.1:8000/api";
 
 export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("USA");
+  const [emailTarget, setEmailTarget] = useState("email");
   const [file, setFile] = useState<File | null>(null);
   const [forceSend, setForceSend] = useState(false);
   const [batchSize, setBatchSize] = useState<number>(60);
@@ -180,7 +181,7 @@ export default function Dashboard() {
 
     try {
       // Start the campaign
-      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}`, { method: "POST" });
+      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}&email_column=${encodeURIComponent(emailTarget)}`, { method: "POST" });
       const startData = await startRes.json();
       
       if (startData.status === "error") {
@@ -248,7 +249,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0c0c0e] text-zinc-300 flex flex-col font-sans selection:bg-zinc-200 selection:text-zinc-900">
+    <div className="h-screen w-full overflow-hidden bg-[#0c0c0e] text-zinc-300 flex flex-col font-sans selection:bg-zinc-200 selection:text-zinc-900">
       
       {/* TOP HEADER */}
       <header className="h-16 flex items-center justify-between px-8 bg-zinc-950/30 backdrop-blur-md border-b border-zinc-800/60 sticky top-0 z-10">
@@ -335,6 +336,19 @@ export default function Dashboard() {
                     <option value="USA">United States</option>
                     <option value="UK">United Kingdom</option>
                     <option value="UAE">United Arab Emirates</option>
+                  </select>
+                </div>
+
+                {/* Email Target Selection */}
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target Email Field</label>
+                  <select 
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner"
+                    value={emailTarget}
+                    onChange={(e) => setEmailTarget(e.target.value)}
+                  >
+                    <option value="email">Primary Email</option>
+                    <option value="secondary email">Secondary Email</option>
                   </select>
                 </div>
 
@@ -705,7 +719,12 @@ export default function Dashboard() {
                             <td className="px-6 py-4">
                               {new Date(run.timestamp).toLocaleDateString()} <span className="text-zinc-600">at</span> {new Date(run.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </td>
-                            <td className="px-6 py-4 font-medium text-zinc-200">{run.country}</td>
+                            <td className="px-6 py-4 font-medium text-zinc-200">
+                              {run.country}
+                              <span className="text-[10px] text-zinc-500 ml-2 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 uppercase tracking-wider">
+                                {run.email_target === 'email' ? 'Primary' : 'Secondary'}
+                              </span>
+                            </td>
                             <td className="px-6 py-4 font-mono text-zinc-500">{run.total_leads}</td>
                             <td className="px-6 py-4 font-mono text-emerald-400">{run.sent}</td>
                             <td className="px-6 py-4 font-mono text-blue-400">{run.opens || 0}</td>

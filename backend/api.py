@@ -102,7 +102,7 @@ def calculate_stats():
         "today_opens": database.get_today_opens()
     }
 
-def run_campaign_thread(country: str, force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0):
+def run_campaign_thread(country: str, force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
     try:
         global_state.is_running = True
         global_state.is_paused = False
@@ -143,7 +143,7 @@ def run_campaign_thread(country: str, force_send: bool = False, batch_size: int 
         logger.init_logs()
         sent_emails = logger.get_sent_emails()
         
-        campaign_id = database.create_campaign_log(country, len(leads))
+        campaign_id = database.create_campaign_log(country, len(leads), email_target=email_column)
         
         for index, lead in enumerate(leads, start=1):
             if global_state.stop_requested:
@@ -168,7 +168,7 @@ def run_campaign_thread(country: str, force_send: bool = False, batch_size: int 
             start_time = time.time()
             
             company = lead.get('company name', 'Unknown')
-            email = lead.get('email', '').strip()
+            email = lead.get(email_column, '').strip()
             first_name = lead.get('first name', '').strip()
             last_name = lead.get('last name', '').strip()
             recipient_name = f"{first_name} {last_name}".strip()
@@ -235,7 +235,11 @@ def run_campaign_thread(country: str, force_send: bool = False, batch_size: int 
                 if batch_size > 0 and cooldown_minutes > 0 and len(global_state.sent_list) % batch_size == 0 and len(global_state.sent_list) > 0:
                     delay = cooldown_minutes * 60
                     global_state.is_cooling_down = True
-                    add_log("SYSTEM", f"Batch limit reached ({batch_size} emails). Cooling down for {cooldown_minutes} minutes...")
+                    add_log("SYSTEM", f"Anti-spam limit reached ({batch_size} emails). Cooling down for {cooldown_minutes} minutes...")
+                elif len(global_state.sent_list) % 10 == 0 and len(global_state.sent_list) > 0:
+                    delay = 180  # 3 minutes
+                    global_state.is_cooling_down = True
+                    add_log("SYSTEM", f"Micro-cooldown: Delaying 3 minutes after 10 emails...")
                 elif index < len(leads):
                     delay = random.uniform(30, 40)
                     global_state.is_cooling_down = False
@@ -368,11 +372,11 @@ async def upload_file(file: UploadFile = File(...)):
     }
 
 @app.post("/api/start")
-def start_campaign(country: str = "Unknown", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0):
+def start_campaign(country: str = "Unknown", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
     if global_state.is_running:
         return {"status": "error", "message": "Campaign is already running."}
     
-    thread = threading.Thread(target=run_campaign_thread, args=(country, force_send, batch_size, cooldown_minutes))
+    thread = threading.Thread(target=run_campaign_thread, args=(country, force_send, batch_size, cooldown_minutes, email_column))
     thread.daemon = True
     thread.start()
     return {"status": "success", "message": "Campaign started"}

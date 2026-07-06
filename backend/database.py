@@ -34,13 +34,13 @@ def init_db():
     conn.commit()
     conn.close()
 
-def create_campaign_log(country: str, total_leads: int) -> int:
+def create_campaign_log(country: str, total_leads: int, email_target: str = "email") -> int:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO campaigns (timestamp, country, total_leads, sent, failed, skipped)
-        VALUES (?, ?, ?, 0, 0, 0)
-    """, (datetime.datetime.now(), country, total_leads))
+        INSERT INTO campaigns (timestamp, country, total_leads, sent, failed, skipped, email_target)
+        VALUES (?, ?, ?, 0, 0, 0, ?)
+    """, (datetime.datetime.now(), country, total_leads, email_target))
     campaign_id = cursor.lastrowid
     conn.commit()
     conn.close()
@@ -63,7 +63,8 @@ def get_recent_campaigns(limit=50):
     # Ordered by newest first, include opens count
     cursor.execute("""
         SELECT c.id, c.timestamp, c.country, c.total_leads, c.sent, c.failed, c.skipped,
-               (SELECT COUNT(*) FROM email_tracking e WHERE e.campaign_id = c.id AND e.open_count > 0) AS opens
+               (SELECT COUNT(*) FROM email_tracking e WHERE e.campaign_id = c.id AND e.open_count > 0) AS opens,
+               c.email_target
         FROM campaigns c
         ORDER BY c.timestamp DESC 
         LIMIT ?
@@ -82,7 +83,8 @@ def get_recent_campaigns(limit=50):
             "sent": row[4],
             "failed": row[5],
             "skipped": row[6],
-            "opens": row[7]
+            "opens": row[7],
+            "email_target": row[8] if len(row) > 8 else "email"
         })
     return campaigns
 
