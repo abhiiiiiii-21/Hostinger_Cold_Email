@@ -13,7 +13,8 @@ import {
   AlertCircle,
   TerminalSquare,
   FastForward,
-  ServerCrash
+  ServerCrash,
+  Copy
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -23,6 +24,8 @@ export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("USA");
   const [file, setFile] = useState<File | null>(null);
   const [forceSend, setForceSend] = useState(false);
+  const [batchSize, setBatchSize] = useState<number>(60);
+  const [cooldownMinutes, setCooldownMinutes] = useState<number>(20);
   const [previewData, setPreviewData] = useState<{total: number, breakdown: Record<string, number>} | null>(null);
   
   // Stats
@@ -32,6 +35,7 @@ export default function Dashboard() {
   const [backendStatus, setBackendStatus] = useState<"offline" | "online" | "error">("offline");
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
   const [progress, setProgress] = useState(0);
   const [processed, setProcessed] = useState(0);
   const [totalLeads, setTotalLeads] = useState(0);
@@ -45,6 +49,7 @@ export default function Dashboard() {
   const [failedList, setFailedList] = useState<{company: string, email: string, error: string}[]>([]);
   const [skippedList, setSkippedList] = useState<{company: string, email: string, reason: string}[]>([]);
   const [logs, setLogs] = useState<{time: string, type: string, message: string}[]>([]);
+  const [copied, setCopied] = useState(false);
 
   // History State
   const [history, setHistory] = useState<any[]>([]);
@@ -119,6 +124,7 @@ export default function Dashboard() {
 
           setIsRunning(data.isRunning);
           setIsPaused(data.isPaused);
+          setIsCoolingDown(data.isCoolingDown);
           setProgress(data.progress);
           setProcessed(data.processed);
           setTotalLeads(data.totalLeads);
@@ -174,7 +180,7 @@ export default function Dashboard() {
 
     try {
       // Start the campaign
-      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&force_send=${forceSend}`, { method: "POST" });
+      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}`, { method: "POST" });
       const startData = await startRes.json();
       
       if (startData.status === "error") {
@@ -232,6 +238,13 @@ export default function Dashboard() {
       case "WARN": return "text-red-400 font-bold";
       default: return "text-zinc-400";
     }
+  };
+
+  const handleCopyLogs = () => {
+    const logText = logs.map(l => `[${l.time}] [${l.type}] ${l.message}`).join('\n');
+    navigator.clipboard.writeText(logText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -375,6 +388,48 @@ export default function Dashboard() {
                     Bypass duplicate check (Send to previously emailed leads)
                   </label>
                 </div>
+
+                {/* Batch Limit & Cooldown Configuration */}
+                <div className="bg-zinc-950/50 border border-zinc-800 p-4 rounded-xl space-y-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Spam Prevention</label>
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Anti-Spam</span>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-[11px] font-medium text-zinc-500 mb-1.5">Batch Size</label>
+                      <input 
+                        type="number"
+                        min="0"
+                        value={batchSize}
+                        onChange={(e) => setBatchSize(Number(e.target.value))}
+                        className="w-full bg-zinc-900 border border-zinc-700/50 rounded-lg px-3 py-2 text-zinc-200 text-sm focus:outline-none focus:border-zinc-500 transition shadow-inner"
+                        placeholder="e.g. 60"
+                      />
+                      <p className="text-[10px] text-zinc-500 mt-1.5">Emails before pausing</p>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <label className="block text-[11px] font-medium text-zinc-500 mb-1.5">Cooldown Wait</label>
+                      <div className="relative">
+                        <input 
+                          type="number"
+                          min="0"
+                          value={cooldownMinutes}
+                          onChange={(e) => setCooldownMinutes(Number(e.target.value))}
+                          className="w-full bg-zinc-900 border border-zinc-700/50 rounded-lg px-3 py-2 text-zinc-200 text-sm focus:outline-none focus:border-zinc-500 transition shadow-inner"
+                          placeholder="e.g. 20"
+                        />
+                        <span className="absolute right-3 top-2 text-xs font-medium text-zinc-500">min</span>
+                      </div>
+                      <p className="text-[10px] text-zinc-500 mt-1.5">Time to pause sending</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 italic border-t border-zinc-800/50 pt-2">
+                    Tip: Send in batches and wait (e.g. 60 emails, wait 20 min) to protect your domain reputation.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -466,8 +521,12 @@ export default function Dashboard() {
                 <h2 className="text-base font-semibold text-zinc-100 tracking-tight mb-4">Live Speed</h2>
                 <div className="space-y-3 font-mono text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-zinc-500">Current Delay</span>
-                    <span className="text-zinc-200">{!isRunning ? '-' : currentDelay > 0 ? `${currentDelay} sec` : 'Wait...'}</span>
+                    <span className={isCoolingDown ? "text-amber-500 font-semibold" : "text-zinc-500"}>
+                      {isCoolingDown ? "Cooldown Timer" : "Current Delay"}
+                    </span>
+                    <span className={isCoolingDown ? "text-amber-400" : "text-zinc-200"}>
+                      {!isRunning ? '-' : currentDelay > 0 ? formatTime(currentDelay) : 'Wait...'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-zinc-500">Average Send Time</span>
@@ -485,13 +544,14 @@ export default function Dashboard() {
             <div className="flex-1 bg-zinc-950 border border-zinc-800/80 rounded-2xl font-mono text-[13px] overflow-hidden flex flex-col relative shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
               
               {/* Tabs Header */}
-              <div className="flex items-center border-b border-zinc-800/80 bg-zinc-900/30 overflow-x-auto">
-                <button 
-                  onClick={() => setActiveTab("logs")}
-                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "logs" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
-                >
-                  <TerminalSquare size={14} /> Live Logs
-                </button>
+              <div className="flex justify-between items-center border-b border-zinc-800/80 bg-zinc-900/30 overflow-x-auto pr-3">
+                <div className="flex items-center">
+                  <button 
+                    onClick={() => setActiveTab("logs")}
+                    className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "logs" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
+                  >
+                    <TerminalSquare size={14} /> Live Logs
+                  </button>
                 <button 
                   onClick={() => setActiveTab("success")}
                   className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "success" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
@@ -510,6 +570,18 @@ export default function Dashboard() {
                 >
                   <XCircle size={14} /> Failed ({failedList.length})
                 </button>
+                </div>
+                
+                {activeTab === "logs" && logs.length > 0 && (
+                  <button 
+                    onClick={handleCopyLogs}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-zinc-800/50 hover:bg-zinc-700/50 text-zinc-300 text-xs transition"
+                    title="Copy logs to clipboard"
+                  >
+                    {copied ? <CheckCircle2 size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                    {copied ? "Copied" : "Copy Logs"}
+                  </button>
+                )}
               </div>
 
               {/* Tab Content */}

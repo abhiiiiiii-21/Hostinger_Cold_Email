@@ -41,6 +41,7 @@ class AppState:
         self.is_running = False
         self.is_paused = False
         self.stop_requested = False
+        self.is_cooling_down = False
         self.progress = 0
         self.total_leads = 0
         self.processed = 0
@@ -101,11 +102,12 @@ def calculate_stats():
         "today_opens": database.get_today_opens()
     }
 
-def run_campaign_thread(country: str, force_send: bool = False):
+def run_campaign_thread(country: str, force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0):
     try:
         global_state.is_running = True
         global_state.is_paused = False
         global_state.stop_requested = False
+        global_state.is_cooling_down = False
         global_state.progress = 0
         global_state.processed = 0
         global_state.sent_list = []
@@ -230,32 +232,37 @@ def run_campaign_thread(country: str, force_send: bool = False):
                 global_state.sent_list.append({"company": company, "email": email})
                 
                 # Sleep delay logic (cooldown vs standard)
-                if len(global_state.sent_list) % 10 == 0 and len(global_state.sent_list) > 0:
-                    delay = random.uniform(120, 180)
-                    add_log("SYSTEM", f"Batch cooldown: Delaying {delay:.0f}s after 10 emails sent...")
+                if batch_size > 0 and cooldown_minutes > 0 and len(global_state.sent_list) % batch_size == 0 and len(global_state.sent_list) > 0:
+                    delay = cooldown_minutes * 60
+                    global_state.is_cooling_down = True
+                    add_log("SYSTEM", f"Batch limit reached ({batch_size} emails). Cooling down for {cooldown_minutes} minutes...")
                 elif index < len(leads):
                     delay = random.uniform(30, 40)
+                    global_state.is_cooling_down = False
                     add_log("SYSTEM", f"Delaying {delay:.1f}s to mimic human behavior...")
                 else:
                     delay = 0
+                    global_state.is_cooling_down = False
 
                 if delay > 0 and not global_state.stop_requested:
-                    global_state.current_delay = int(delay)
-                    
-                    # We sleep in chunks so we can interrupt quickly if stop_requested
-                    sleep_chunks = int(delay * 10)
-                    for _ in range(sleep_chunks):
+                    end_time = time.time() + delay
+                    while time.time() < end_time:
                         if global_state.stop_requested:
                             break
                         while global_state.is_paused:
                             if global_state.stop_requested:
                                 break
                             time.sleep(0.5)
+                            end_time += 0.5
                         if global_state.stop_requested:
                             break
                         time.sleep(0.1)
+                        global_state.current_delay = int(max(0, end_time - time.time()))
                         if global_state.estimated_completion_seconds > 0:
                             global_state.estimated_completion_seconds -= 0.1
+                    
+                    global_state.is_cooling_down = False
+                    global_state.current_delay = 0
                         
             except Exception as e:
                 error_msg = str(e)
@@ -293,6 +300,7 @@ def get_state():
     return {
         "isRunning": global_state.is_running,
         "isPaused": global_state.is_paused,
+        "isCoolingDown": global_state.is_cooling_down,
         "progress": global_state.progress,
         "totalLeads": global_state.total_leads,
         "processed": global_state.processed,
@@ -360,11 +368,11 @@ async def upload_file(file: UploadFile = File(...)):
     }
 
 @app.post("/api/start")
-def start_campaign(country: str = "Unknown", force_send: bool = False):
+def start_campaign(country: str = "Unknown", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0):
     if global_state.is_running:
         return {"status": "error", "message": "Campaign is already running."}
     
-    thread = threading.Thread(target=run_campaign_thread, args=(country, force_send,))
+    thread = threading.Thread(target=run_campaign_thread, args=(country, force_send, batch_size, cooldown_minutes))
     thread.daemon = True
     thread.start()
     return {"status": "success", "message": "Campaign started"}
