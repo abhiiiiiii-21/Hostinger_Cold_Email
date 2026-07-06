@@ -136,7 +136,7 @@ def _append_to_sent_folder(msg: MIMEMultipart) -> None:
         print("-----------------------------\n")
 
 
-def send_email(to_email: str, subject: str, html_body: str) -> None:
+def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = None) -> None:
     """
     Sends an HTML email using Hostinger SMTP and saves it to the Sent mailbox.
 
@@ -144,10 +144,24 @@ def send_email(to_email: str, subject: str, html_body: str) -> None:
         to_email: The recipient's email address.
         subject: The subject line of the email.
         html_body: The formatted HTML body of the email.
+        tracking_id: Optional tracking ID to embed a 1x1 tracking pixel.
     """
     print(">>> send_email() ENTERED")
     if not all([SMTP_HOST, SMTP_EMAIL, SMTP_PASSWORD]):
         raise ValueError("Missing SMTP configuration in .env file.")
+
+    if tracking_id:
+        tracking_base_url = os.getenv("TRACKING_BASE_URL", "http://localhost:8000")
+        pixel_url = f"{tracking_base_url.rstrip('/')}/api/track/{tracking_id}.png"
+        pixel_html = f'<img src="{pixel_url}" width="1" height="1" style="display:none;" alt="" />'
+        
+        # Insert pixel right before </body> if present, else append to the end
+        if "</body>" in html_body.lower():
+            # Doing a case-insensitive replacement is a bit tricky, but simple str replace usually works
+            # assuming </body> is lowercase. Let's use simple replace or append.
+            html_body = re.sub(r'</body>', f'{pixel_html}</body>', html_body, flags=re.IGNORECASE)
+        else:
+            html_body += f'\n{pixel_html}'
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject

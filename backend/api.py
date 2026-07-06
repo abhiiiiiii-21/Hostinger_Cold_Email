@@ -5,20 +5,21 @@ import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
+import uuid
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import existing modules
-from csv_reader import CSVReader
-from classifier import classify, choose_template
-from template_loader import load_template
-from template_renderer import render_template
-from html_renderer import convert_to_html
-from template_parser import parse_template
-from sender import send_email
-import logger
-import database
+from .csv_reader import CSVReader
+from .classifier import classify, choose_template
+from .template_loader import load_template
+from .template_renderer import render_template
+from .html_renderer import convert_to_html
+from .template_parser import parse_template
+from .sender import send_email
+from . import logger
+from . import database
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -96,7 +97,8 @@ def calculate_stats():
     return {
         "today": sent_today,
         "yesterday": sent_yesterday,
-        "month": sent_month
+        "month": sent_month,
+        "today_opens": database.get_today_opens()
     }
 
 def run_campaign_thread(country: str, force_send: bool = False):
@@ -139,6 +141,8 @@ def run_campaign_thread(country: str, force_send: bool = False):
         logger.init_logs()
         sent_emails = logger.get_sent_emails()
         
+        campaign_id = database.create_campaign_log(country, len(leads))
+        
         for index, lead in enumerate(leads, start=1):
             if global_state.stop_requested:
                 add_log("WARN", "Sequence terminated manually by user.")
@@ -163,6 +167,9 @@ def run_campaign_thread(country: str, force_send: bool = False):
             
             company = lead.get('company name', 'Unknown')
             email = lead.get('email', '').strip()
+            first_name = lead.get('first name', '').strip()
+            last_name = lead.get('last name', '').strip()
+            recipient_name = f"{first_name} {last_name}".strip()
             
             add_log("PROCESS", f"Target: {company} ({email})")
             
@@ -206,10 +213,14 @@ def run_campaign_thread(country: str, force_send: bool = False):
                 
                 add_log("SEND", "Transmitting email via Hostinger SMTP...")
                 
+                tracking_id = str(uuid.uuid4())
+                database.log_email_sent(tracking_id, email, company, campaign_id=campaign_id, website_review=review, recipient_name=recipient_name)
+                
                 send_email(
                     to_email=email,
                     subject=parsed_email.subject,
-                    html_body=html_body
+                    html_body=html_body,
+                    tracking_id=tracking_id
                 )
                 
                 logger.log_success(company, email, parsed_email.subject)
@@ -218,11 +229,18 @@ def run_campaign_thread(country: str, force_send: bool = False):
                 add_log("SUCCESS", f"Delivered successfully to {email}")
                 global_state.sent_list.append({"company": company, "email": email})
                 
-                # Sleep delay unless it's the last lead
-                if index < len(leads) and not global_state.stop_requested:
+                # Sleep delay logic (cooldown vs standard)
+                if len(global_state.sent_list) % 10 == 0 and len(global_state.sent_list) > 0:
+                    delay = random.uniform(120, 180)
+                    add_log("SYSTEM", f"Batch cooldown: Delaying {delay:.0f}s after 10 emails sent...")
+                elif index < len(leads):
                     delay = random.uniform(30, 40)
-                    global_state.current_delay = int(delay)
                     add_log("SYSTEM", f"Delaying {delay:.1f}s to mimic human behavior...")
+                else:
+                    delay = 0
+
+                if delay > 0 and not global_state.stop_requested:
+                    global_state.current_delay = int(delay)
                     
                     # We sleep in chunks so we can interrupt quickly if stop_requested
                     sleep_chunks = int(delay * 10)
@@ -259,13 +277,15 @@ def run_campaign_thread(country: str, force_send: bool = False):
         add_log("ERROR", f"Critical System Error: {str(e)}")
     finally:
         if global_state.total_leads > 0:
-            database.log_campaign(
-                country,
-                global_state.total_leads,
-                len(global_state.sent_list),
-                len(global_state.failed_list),
-                len(global_state.skipped_list)
-            )
+            try:
+                database.update_campaign_log(
+                    campaign_id,
+                    len(global_state.sent_list),
+                    len(global_state.failed_list),
+                    len(global_state.skipped_list)
+                )
+            except Exception as update_e:
+                add_log("ERROR", f"Failed to update campaign log: {str(update_e)}")
         global_state.is_running = False
 
 @app.get("/api/state")
@@ -353,6 +373,10 @@ def start_campaign(country: str = "Unknown", force_send: bool = False):
 def get_history():
     return database.get_recent_campaigns()
 
+@app.get("/api/history/{campaign_id}/tracking")
+def get_campaign_tracking_endpoint(campaign_id: int):
+    return database.get_campaign_tracking(campaign_id)
+
 @app.post("/api/stop")
 def stop_campaign():
     if not global_state.is_running:
@@ -382,3 +406,26 @@ def resume_campaign():
     global_state.is_paused = False
     add_log("INFO", "Campaign resumed.")
     return {"status": "success", "message": "Resumed"}
+
+@app.get("/api/track/{tracking_id}.png")
+def track_email_open(tracking_id: str):
+    """
+    Transparent 1x1 pixel endpoint to track email opens.
+    """
+    # Log the open in the database
+    database.log_email_opened(tracking_id)
+    
+    # 1x1 transparent GIF base64 encoded
+    transparent_pixel = (
+        b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff"
+        b"\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00"
+        b"\x01\x00\x00\x02\x01\x44\x00\x3b"
+    )
+    return Response(content=transparent_pixel, media_type="image/gif")
+
+@app.get("/api/tracking")
+def get_tracking():
+    """
+    Returns email tracking stats.
+    """
+    return database.get_tracking_stats()

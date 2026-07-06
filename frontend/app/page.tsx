@@ -26,7 +26,7 @@ export default function Dashboard() {
   const [previewData, setPreviewData] = useState<{total: number, breakdown: Record<string, number>} | null>(null);
   
   // Stats
-  const [stats, setStats] = useState({ today: 0, yesterday: 0, month: 0 });
+  const [stats, setStats] = useState({ today: 0, yesterday: 0, month: 0, today_opens: 0 });
 
   // System State from Backend
   const [backendStatus, setBackendStatus] = useState<"offline" | "online" | "error">("offline");
@@ -49,6 +49,8 @@ export default function Dashboard() {
   // History State
   const [history, setHistory] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState<"dashboard" | "history">("dashboard");
+  const [expandedCampaign, setExpandedCampaign] = useState<number | null>(null);
+  const [campaignTracking, setCampaignTracking] = useState<any[]>([]);
   const isRunningRef = useRef(isRunning);
 
   useEffect(() => {
@@ -68,6 +70,26 @@ export default function Dashboard() {
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  const handleRowClick = async (campaignId: number) => {
+    if (expandedCampaign === campaignId) {
+      setExpandedCampaign(null);
+      return;
+    }
+    
+    setExpandedCampaign(campaignId);
+    try {
+      const res = await fetch(`${API_BASE}/history/${campaignId}/tracking`);
+      if (res.ok) {
+        const data = await res.json();
+        setCampaignTracking(data);
+      } else {
+        setCampaignTracking([]);
+      }
+    } catch (err) {
+      setCampaignTracking([]);
+    }
+  };
 
   // Tabs for the execution monitor
   const [activeTab, setActiveTab] = useState<"logs" | "success" | "failed" | "skipped">("logs");
@@ -191,9 +213,10 @@ export default function Dashboard() {
   };
 
   const formatTime = (seconds: number) => {
-    if (seconds < 60) return `${seconds} sec`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const roundedSeconds = Math.round(seconds);
+    if (roundedSeconds < 60) return `${roundedSeconds} sec`;
+    const mins = Math.floor(roundedSeconds / 60);
+    const secs = roundedSeconds % 60;
     return `${mins} min ${secs > 0 ? secs + ' sec' : ''}`;
   };
 
@@ -269,8 +292,9 @@ export default function Dashboard() {
             {currentView === "dashboard" ? (
               <>
                 {/* STATS ROW */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <StatCard title="Sent Today" value={stats.today.toString()} icon={<CheckCircle2 size={20} className="text-zinc-400" />} />
+          <StatCard title="Today's Opens" value={`${stats.today_opens} / ${stats.today}`} trend={stats.today > 0 ? `${Math.round((stats.today_opens / stats.today) * 100)}%` : "0%"} icon={<Play size={20} className="text-zinc-400" />} />
           <StatCard title="Sent Yesterday" value={stats.yesterday.toString()} icon={<Users size={20} className="text-zinc-400" />} />
           <StatCard title="Monthly Volume" value={stats.month.toString()} icon={<BarChart3 size={20} className="text-zinc-400" />} />
         </div>
@@ -593,23 +617,104 @@ export default function Dashboard() {
                         <th className="px-6 py-4">Country</th>
                         <th className="px-6 py-4">Total</th>
                         <th className="px-6 py-4 text-emerald-500">Sent</th>
+                        <th className="px-6 py-4 text-blue-400">Opens</th>
                         <th className="px-6 py-4 text-amber-500">Skipped</th>
                         <th className="px-6 py-4 text-red-500">Failed</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-800/50">
                       {history.map(run => (
-                        <tr key={run.id} className="hover:bg-zinc-900/20 transition">
-                          <td className="px-6 py-4 font-mono">#{run.id}</td>
-                          <td className="px-6 py-4">
-                            {new Date(run.timestamp).toLocaleDateString()} <span className="text-zinc-600">at</span> {new Date(run.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </td>
-                          <td className="px-6 py-4 font-medium text-zinc-200">{run.country}</td>
-                          <td className="px-6 py-4 font-mono text-zinc-500">{run.total_leads}</td>
-                          <td className="px-6 py-4 font-mono text-emerald-400">{run.sent}</td>
-                          <td className="px-6 py-4 font-mono text-amber-400">{run.skipped}</td>
-                          <td className="px-6 py-4 font-mono text-red-400">{run.failed}</td>
-                        </tr>
+                        <React.Fragment key={run.id}>
+                          <tr 
+                            className="hover:bg-zinc-900/40 transition cursor-pointer"
+                            onClick={() => handleRowClick(run.id)}
+                          >
+                            <td className="px-6 py-4 font-mono">#{run.id}</td>
+                            <td className="px-6 py-4">
+                              {new Date(run.timestamp).toLocaleDateString()} <span className="text-zinc-600">at</span> {new Date(run.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </td>
+                            <td className="px-6 py-4 font-medium text-zinc-200">{run.country}</td>
+                            <td className="px-6 py-4 font-mono text-zinc-500">{run.total_leads}</td>
+                            <td className="px-6 py-4 font-mono text-emerald-400">{run.sent}</td>
+                            <td className="px-6 py-4 font-mono text-blue-400">{run.opens || 0}</td>
+                            <td className="px-6 py-4 font-mono text-amber-400">{run.skipped}</td>
+                            <td className="px-6 py-4 font-mono text-red-400">{run.failed}</td>
+                          </tr>
+                          
+                          {/* Expanded Tracking Details */}
+                          {expandedCampaign === run.id && (
+                            <tr className="bg-zinc-950/80 border-t-0 shadow-inner">
+                              <td colSpan={8} className="p-0">
+                                <div className="p-6 border-b border-zinc-800/60 bg-black/20">
+                                  <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
+                                      <Users size={16} className="text-zinc-400" />
+                                      Recipient Tracking Details (Campaign #{run.id})
+                                    </h4>
+                                    <span className="text-xs font-medium text-zinc-500">{campaignTracking.length} Sent Emails</span>
+                                  </div>
+                                  
+                                  {campaignTracking.length === 0 ? (
+                                    <p className="text-zinc-500 text-sm italic py-4">No tracking data recorded for this campaign.</p>
+                                  ) : (
+                                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar border border-zinc-800/80 rounded-xl bg-zinc-900/20">
+                                      <table className="w-full text-left text-sm text-zinc-400">
+                                        <thead className="bg-zinc-900/60 text-xs uppercase text-zinc-500 font-semibold sticky top-0 backdrop-blur-md">
+                                          <tr>
+                                            <th className="px-4 py-3">Recipient</th>
+                                            <th className="px-4 py-3 w-1/3">Website Review</th>
+                                            <th className="px-4 py-3">Status</th>
+                                            <th className="px-4 py-3">Last Opened</th>
+                                            <th className="px-4 py-3">Total Opens</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-zinc-800/50">
+                                          {campaignTracking.map(track => (
+                                            <tr key={track.tracking_id} className="hover:bg-zinc-900/40">
+                                              <td className="px-4 py-3">
+                                                {track.recipient_name && <p className="text-zinc-100 font-semibold mb-0.5">{track.recipient_name}</p>}
+                                                <p className="text-zinc-400 font-medium text-xs mb-0.5">{track.company}</p>
+                                                <p className="text-xs text-zinc-500">{track.email}</p>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <p className="text-xs text-zinc-400 line-clamp-2" title={track.website_review || "No review provided"}>
+                                                  {track.website_review || "—"}
+                                                </p>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                {track.open_count > 0 ? (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/50 text-emerald-400 text-xs font-medium border border-emerald-900/50">
+                                                    <CheckCircle2 size={12} /> Opened
+                                                  </span>
+                                                ) : (
+                                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900 text-zinc-500 text-xs font-medium border border-zinc-800">
+                                                    <AlertCircle size={12} /> Unopened
+                                                  </span>
+                                                )}
+                                              </td>
+                                              <td className="px-4 py-3 text-zinc-300 text-xs">
+                                                {track.opened_at ? (
+                                                  <>
+                                                    {new Date(track.opened_at).toLocaleDateString()} <span className="text-zinc-600">at</span> {new Date(track.opened_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                  </>
+                                                ) : (
+                                                  "-"
+                                                )}
+                                              </td>
+                                              <td className="px-4 py-3 font-mono text-zinc-500">
+                                                {track.open_count > 0 ? track.open_count : "-"}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       ))}
                       {history.length === 0 && (
                         <tr>
