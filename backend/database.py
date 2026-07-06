@@ -172,23 +172,31 @@ def get_dashboard_stats():
     conn = get_db()
     cursor = conn.cursor()
     
-    stats = {"today": 0, "yesterday": 0, "month": 0, "today_opens": 0}
+    stats = {"today": 0, "yesterday": 0, "month": 0, "today_opens": 0, "yesterday_opens": 0, "month_opens": 0}
     
-    # Today sent
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp) = CURRENT_DATE")
+    # Today sent (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
     stats["today"] = cursor.fetchone()[0]
     
-    # Yesterday sent
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp) = CURRENT_DATE - INTERVAL '1 day'")
+    # Yesterday sent (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
     stats["yesterday"] = cursor.fetchone()[0]
     
-    # Month sent
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE date_trunc('month', timestamp) = date_trunc('month', CURRENT_DATE)")
+    # Month sent (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE date_trunc('month', timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
     stats["month"] = cursor.fetchone()[0]
     
-    # Today opens
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at) = CURRENT_DATE")
+    # Today opens (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
     stats["today_opens"] = cursor.fetchone()[0]
+
+    # Yesterday opens (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
+    stats["yesterday_opens"] = cursor.fetchone()[0]
+
+    # Month opens (IST timezone correction)
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND date_trunc('month', sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    stats["month_opens"] = cursor.fetchone()[0]
     
     cursor.close()
     conn.close()

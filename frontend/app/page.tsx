@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [previewData, setPreviewData] = useState<{total: number, breakdown: Record<string, number>} | null>(null);
   
   // Stats
-  const [stats, setStats] = useState({ today: 0, yesterday: 0, month: 0, today_opens: 0 });
+  const [stats, setStats] = useState({ today: 0, yesterday: 0, month: 0, today_opens: 0, yesterday_opens: 0, month_opens: 0 });
 
   // System State from Backend
   const [backendStatus, setBackendStatus] = useState<"offline" | "online" | "error">("offline");
@@ -57,6 +57,13 @@ export default function Dashboard() {
   const [currentView, setCurrentView] = useState<"dashboard" | "history">("dashboard");
   const [expandedCampaign, setExpandedCampaign] = useState<number | null>(null);
   const [campaignTracking, setCampaignTracking] = useState<any[]>([]);
+  const [trackingFilter, setTrackingFilter] = useState<"all" | "opened" | "unopened">("all");
+  const filteredTracking = campaignTracking.filter(track => {
+    if (trackingFilter === "opened") return track.open_count > 0;
+    if (trackingFilter === "unopened") return track.open_count === 0;
+    return true;
+  });
+  
   const isRunningRef = useRef(isRunning);
 
   useEffect(() => {
@@ -84,6 +91,7 @@ export default function Dashboard() {
     }
     
     setExpandedCampaign(campaignId);
+    setTrackingFilter("all");
     try {
       const res = await fetch(`${API_BASE}/history/${campaignId}/tracking`);
       if (res.ok) {
@@ -306,11 +314,13 @@ export default function Dashboard() {
             {currentView === "dashboard" ? (
               <>
                 {/* STATS ROW */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <StatCard title="Sent Today" value={stats.today.toString()} icon={<CheckCircle2 size={20} className="text-zinc-400" />} />
           <StatCard title="Today's Opens" value={`${stats.today_opens} / ${stats.today}`} trend={stats.today > 0 ? `${Math.round((stats.today_opens / stats.today) * 100)}%` : "0%"} icon={<Play size={20} className="text-zinc-400" />} />
           <StatCard title="Sent Yesterday" value={stats.yesterday.toString()} icon={<Users size={20} className="text-zinc-400" />} />
+          <StatCard title="Yesterday's Opens" value={`${stats.yesterday_opens} / ${stats.yesterday}`} trend={stats.yesterday > 0 ? `${Math.round((stats.yesterday_opens / stats.yesterday) * 100)}%` : "0%"} icon={<Play size={20} className="text-zinc-400" />} />
           <StatCard title="Monthly Volume" value={stats.month.toString()} icon={<BarChart3 size={20} className="text-zinc-400" />} />
+          <StatCard title="Monthly Open Rate" value={stats.month > 0 ? `${Math.round((stats.month_opens / stats.month) * 100)}%` : "0%"} icon={<Play size={20} className="text-zinc-400" />} />
         </div>
 
         {/* LAUNCH CAMPAIGN & LOGS */}
@@ -742,7 +752,14 @@ export default function Dashboard() {
                                       <Users size={16} className="text-zinc-400" />
                                       Recipient Tracking Details (Campaign #{run.id})
                                     </h4>
-                                    <span className="text-xs font-medium text-zinc-500">{campaignTracking.length} Sent Emails</span>
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex items-center bg-zinc-900/50 rounded-lg p-0.5 border border-zinc-800/80">
+                                        <button onClick={() => setTrackingFilter("all")} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "all" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>All</button>
+                                        <button onClick={() => setTrackingFilter("opened")} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "opened" ? "bg-emerald-950/50 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"}`}>Opened</button>
+                                        <button onClick={() => setTrackingFilter("unopened")} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "unopened" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>Unopened</button>
+                                      </div>
+                                      <span className="text-xs font-medium text-zinc-500">{filteredTracking.length} / {campaignTracking.length} Sent Emails</span>
+                                    </div>
                                   </div>
                                   
                                   {campaignTracking.length === 0 ? (
@@ -760,9 +777,16 @@ export default function Dashboard() {
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-zinc-800/50">
-                                          {campaignTracking.map(track => (
-                                            <tr key={track.tracking_id} className="hover:bg-zinc-900/40">
-                                              <td className="px-4 py-3">
+                                          {filteredTracking.length === 0 ? (
+                                            <tr>
+                                              <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 italic text-sm">
+                                                No results found for this filter.
+                                              </td>
+                                            </tr>
+                                          ) : (
+                                            filteredTracking.map(track => (
+                                              <tr key={track.tracking_id} className="hover:bg-zinc-900/40">
+                                                <td className="px-4 py-3">
                                                 {track.recipient_name && <p className="text-zinc-100 font-semibold mb-0.5">{track.recipient_name}</p>}
                                                 <p className="text-zinc-400 font-medium text-xs mb-0.5">{track.company}</p>
                                                 <p className="text-xs text-zinc-500">{track.email}</p>
@@ -796,7 +820,8 @@ export default function Dashboard() {
                                                 {track.open_count > 0 ? track.open_count : "-"}
                                               </td>
                                             </tr>
-                                          ))}
+                                          ))
+                                          )}
                                         </tbody>
                                       </table>
                                     </div>
