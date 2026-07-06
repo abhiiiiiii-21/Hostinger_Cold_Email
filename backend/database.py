@@ -168,19 +168,31 @@ def get_tracking_stats():
         })
     return tracking_data
 
-def get_today_opens():
+def get_dashboard_stats():
     conn = get_db()
     cursor = conn.cursor()
-    # In postgres, CURRENT_DATE is local date depending on timezone setting, or use timezone
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM email_tracking
-        WHERE open_count > 0 AND DATE(sent_at) = CURRENT_DATE
-    """)
-    count = cursor.fetchone()[0]
+    
+    stats = {"today": 0, "yesterday": 0, "month": 0, "today_opens": 0}
+    
+    # Today sent
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp) = CURRENT_DATE")
+    stats["today"] = cursor.fetchone()[0]
+    
+    # Yesterday sent
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp) = CURRENT_DATE - INTERVAL '1 day'")
+    stats["yesterday"] = cursor.fetchone()[0]
+    
+    # Month sent
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE date_trunc('month', timestamp) = date_trunc('month', CURRENT_DATE)")
+    stats["month"] = cursor.fetchone()[0]
+    
+    # Today opens
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at) = CURRENT_DATE")
+    stats["today_opens"] = cursor.fetchone()[0]
+    
     cursor.close()
     conn.close()
-    return count
+    return stats
 
 def get_campaign_tracking(campaign_id: int):
     conn = get_db()

@@ -66,41 +66,8 @@ def add_log(log_type: str, message: str):
         global_state.logs.pop(0)
 
 def calculate_stats():
-    """Reads success.csv to calculate Today, Yesterday, and Monthly stats."""
-    sent_today = 0
-    sent_yesterday = 0
-    sent_month = 0
-    
-    if not logger.SUCCESS_LOG.exists():
-        return {"today": 0, "yesterday": 0, "month": 0}
-        
-    now = datetime.now()
-    today_date = now.date()
-    yesterday_date = today_date - timedelta(days=1)
-    
-    import csv
-    with open(logger.SUCCESS_LOG, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            timestamp_str = row.get("Timestamp")
-            if timestamp_str:
-                try:
-                    dt = datetime.fromisoformat(timestamp_str)
-                    if dt.date() == today_date:
-                        sent_today += 1
-                    if dt.date() == yesterday_date:
-                        sent_yesterday += 1
-                    if dt.month == now.month and dt.year == now.year:
-                        sent_month += 1
-                except:
-                    pass
-                    
-    return {
-        "today": sent_today,
-        "yesterday": sent_yesterday,
-        "month": sent_month,
-        "today_opens": database.get_today_opens()
-    }
+    """Reads from database to calculate Today, Yesterday, and Monthly stats."""
+    return database.get_dashboard_stats()
 
 def run_campaign_thread(country: str, force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
     try:
