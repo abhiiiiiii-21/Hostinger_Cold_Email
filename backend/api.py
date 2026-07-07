@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
 import uuid
+import smtplib
 
 from fastapi import FastAPI, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +21,7 @@ from .template_parser import parse_template
 from .sender import send_email
 from . import logger
 from . import database
+from . import replies
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -147,6 +149,11 @@ def run_campaign_thread(country: str, force_send: bool = False, batch_size: int 
                 global_state.skipped_list.append({"company": company, "email": "N/A", "reason": "No Email"})
                 continue
                 
+            if database.is_hard_bounced(email):
+                add_log("SKIP", "Reason: Email is on hard bounce suppression list.")
+                global_state.skipped_list.append({"company": company, "email": email, "reason": "Hard Bounced"})
+                continue
+                
             if not force_send and email.lower() in sent_emails:
                 add_log("SKIP", "Reason: Lead was already emailed previously.")
                 global_state.skipped_list.append({"company": company, "email": email, "reason": "Already Emailed"})
@@ -235,6 +242,24 @@ def run_campaign_thread(country: str, force_send: bool = False, batch_size: int 
                     global_state.is_cooling_down = False
                     global_state.current_delay = 0
                         
+            except smtplib.SMTPResponseException as e:
+                code = e.smtp_code
+                msg = e.smtp_error.decode(errors='ignore') if isinstance(e.smtp_error, bytes) else str(e.smtp_error)
+                bounce_type = "hard" if 500 <= code < 600 else "soft"
+                database.log_bounce(email, bounce_type, f"{code} {msg}", recipient_name, company)
+                error_msg = f"SMTP Response: {code} {msg}"
+                add_log("ERROR", f"{bounce_type.upper()} BOUNCE: {error_msg}")
+                global_state.failed_list.append({"company": company, "email": email, "error": error_msg})
+                logger.log_failure(company, email, "Unknown", error_msg)
+            except smtplib.SMTPRecipientsRefused as e:
+                # Log as hard bounce for all refused recipients
+                for ref_email, (code, msg) in e.recipients.items():
+                    msg_str = msg.decode(errors='ignore') if isinstance(msg, bytes) else str(msg)
+                    database.log_bounce(ref_email, "hard", f"{code} {msg_str}", recipient_name, company)
+                error_msg = f"Recipients Refused: {str(e.recipients)}"
+                add_log("ERROR", f"HARD BOUNCE: {error_msg}")
+                global_state.failed_list.append({"company": company, "email": email, "error": error_msg})
+                logger.log_failure(company, email, "Unknown", error_msg)
             except Exception as e:
                 error_msg = str(e)
                 add_log("ERROR", f"SMTP Failure: {error_msg}")
@@ -408,3 +433,24 @@ def get_tracking():
     Returns email tracking stats.
     """
     return database.get_tracking_stats()
+
+@app.post("/api/sync-replies")
+def sync_replies():
+    """
+    Triggers an IMAP check for new replies.
+    """
+    return replies.check_inbox_for_replies()
+
+@app.get("/api/bounces")
+def get_bounces():
+    """
+    Returns list of bounced contacts.
+    """
+    return database.get_bounced_contacts()
+
+@app.get("/api/trend")
+def get_trend(days: int = 30):
+    """
+    Returns daily aggregated stats (sent, opens, replies) for the trend chart.
+    """
+    return database.get_daily_trend_stats(days)

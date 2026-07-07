@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Send, BarChart3, Users, Play } from "lucide-react";
+import { Send, LayoutDashboard, History, Zap, ShieldBan } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -36,7 +36,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <header className="h-16 flex items-center justify-between px-8 bg-zinc-950/30 backdrop-blur-md border-b border-zinc-800/60 sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3 text-zinc-100 font-bold text-lg tracking-tight">
           <div className="w-8 h-8 bg-zinc-200 rounded-md flex items-center justify-center text-zinc-900 shadow-sm">
-            <Send size={18} />
+            <Send size={18} strokeWidth={2.5} />
           </div>
           <span>Cold Emailing</span>
         </div>
@@ -68,22 +68,29 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               href="/"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
             >
-              <BarChart3 size={18} />
+              <LayoutDashboard size={18} strokeWidth={1.75} />
               <span className="font-medium text-sm">Dashboard</span>
             </Link>
             <Link 
               href="/automation"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/automation" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
             >
-              <Play size={18} />
+              <Zap size={18} strokeWidth={1.75} />
               <span className="font-medium text-sm">Automation</span>
             </Link>
             <Link 
               href="/history"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/history" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
             >
-              <Users size={18} />
+              <History size={18} strokeWidth={1.75} />
               <span className="font-medium text-sm">Campaign History</span>
+            </Link>
+            <Link 
+              href="/bounced-emails"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/bounced-emails" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
+            >
+              <ShieldBan size={18} strokeWidth={1.75} />
+              <span className="font-medium text-sm">Suppression List</span>
             </Link>
           </div>
         </aside>

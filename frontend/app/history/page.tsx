@@ -106,7 +106,7 @@ export default function HistoryPage() {
                       <div className="p-6 border-b border-zinc-800/60 bg-black/20">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
-                            <Users size={16} className="text-zinc-400" />
+                            <Users size={16} strokeWidth={1.75} className="text-zinc-400" />
                             Recipient Tracking Details (Campaign #{run.id})
                           </h4>
                           <div className="flex items-center gap-3">
@@ -156,11 +156,11 @@ export default function HistoryPage() {
                                       <td className="px-4 py-3">
                                         {track.open_count > 0 ? (
                                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/50 text-emerald-400 text-xs font-medium border border-emerald-900/50">
-                                            <CheckCircle2 size={12} /> Opened
+                                            <CheckCircle2 size={12} strokeWidth={1.75} /> Opened
                                           </span>
                                         ) : (
                                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-900 text-zinc-500 text-xs font-medium border border-zinc-800">
-                                            <AlertCircle size={12} /> Unopened
+                                            <AlertCircle size={12} strokeWidth={1.75} /> Unopened
                                           </span>
                                         )}
                                       </td>
@@ -208,7 +208,7 @@ export default function HistoryPage() {
                 disabled={currentPage === 1}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="h-4 w-4 mr-1" strokeWidth={1.75} />
                 Previous
               </button>
               <div className="flex items-center gap-1">
@@ -228,7 +228,7 @@ export default function HistoryPage() {
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
               >
                 Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-4 w-4 ml-1" strokeWidth={1.75} />
               </button>
             </div>
           </div>

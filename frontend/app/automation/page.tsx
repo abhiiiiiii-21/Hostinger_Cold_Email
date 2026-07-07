@@ -7,16 +7,18 @@ import {
   Users, 
   Play,
   Square,
-  UploadCloud,
+  CloudUpload,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  TerminalSquare,
-  FastForward,
+  Terminal,
+  SkipForward,
   ServerCrash,
   Copy,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Rocket,
+  Pause
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -192,9 +194,57 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Automation Engine</h1>
-        <p className="text-zinc-500 text-sm mt-1">Configure and launch your cold email campaigns.</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Automation Engine</h1>
+          <p className="text-zinc-500 text-sm mt-1">Configure and launch your cold email campaigns.</p>
+        </div>
+
+        {/* Action Buttons in Heading */}
+        <div className="flex gap-4">
+          {!isRunning ? (
+            <button 
+              onClick={handleRunCampaign}
+              disabled={!file || backendStatus === "offline"}
+              className={`py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 ${
+                !file || backendStatus === "offline"
+                  ? "bg-zinc-900 text-zinc-600 border border-zinc-800 cursor-not-allowed" 
+                  : "bg-zinc-100 hover:bg-white text-zinc-900 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] active:scale-[0.98]"
+              }`}
+            >
+              <Rocket size={16} strokeWidth={1.75} fill={!file || backendStatus === "offline" ? "transparent" : "currentColor"} />
+              Execute Campaign
+            </button>
+          ) : (
+            <div className="flex gap-3">
+              {!isPaused ? (
+                <button 
+                  onClick={handlePauseCampaign}
+                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-amber-950/40 text-amber-400 border border-amber-900/50 hover:bg-amber-900/40 hover:text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.1)] active:scale-[0.98]"
+                >
+                  <Pause size={14} strokeWidth={1.75} fill="currentColor" />
+                  Pause
+                </button>
+              ) : (
+                <button 
+                  onClick={handleResumeCampaign}
+                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 hover:bg-emerald-900/40 hover:text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.1)] active:scale-[0.98]"
+                >
+                  <Play size={14} fill="currentColor" />
+                  Resume
+                </button>
+              )}
+              
+              <button 
+                onClick={handleStopCampaign}
+                className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-red-950/40 text-red-400 border border-red-900/50 hover:bg-red-900/40 hover:text-red-300 shadow-[0_0_20px_rgba(220,38,38,0.1)] active:scale-[0.98]"
+              >
+                <Square size={14} strokeWidth={1.75} fill="currentColor" />
+                Stop
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* LAUNCH CAMPAIGN & LOGS */}
@@ -241,7 +291,7 @@ export default function Dashboard() {
                   <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Lead Data</label>
                   <label className="flex flex-col items-center justify-center w-full h-36 bg-zinc-950/50 border border-dashed border-zinc-700 rounded-xl cursor-pointer hover:bg-zinc-900 hover:border-zinc-500 transition group">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                      <UploadCloud className="w-6 h-6 text-zinc-500 group-hover:text-zinc-300 transition mb-3" />
+                      <CloudUpload className="w-6 h-6 text-zinc-500 group-hover:text-zinc-300 transition mb-3" strokeWidth={1.5} />
                       <p className="text-sm text-zinc-300 font-medium truncate max-w-[200px]">
                         {file ? file.name : "Select CSV file"}
                       </p>
@@ -331,49 +381,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {!isRunning ? (
-              <button 
-                onClick={handleRunCampaign}
-                disabled={!file || backendStatus === "offline"}
-                className={`w-full py-4 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 ${
-                  !file || backendStatus === "offline"
-                    ? "bg-zinc-900 text-zinc-600 border border-zinc-800 cursor-not-allowed" 
-                    : "bg-zinc-100 hover:bg-white text-zinc-900 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] active:scale-[0.98]"
-                }`}
-              >
-                <Play size={16} fill={!file || backendStatus === "offline" ? "transparent" : "currentColor"} />
-                Execute Campaign
-              </button>
-            ) : (
-              <div className="flex gap-4">
-                {!isPaused ? (
-                  <button 
-                    onClick={handlePauseCampaign}
-                    className="flex-1 py-4 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-amber-950/40 text-amber-400 border border-amber-900/50 hover:bg-amber-900/40 hover:text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.1)] active:scale-[0.98]"
-                  >
-                    <Square size={14} fill="currentColor" />
-                    Pause
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleResumeCampaign}
-                    className="flex-1 py-4 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 hover:bg-emerald-900/40 hover:text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.1)] active:scale-[0.98]"
-                  >
-                    <Play size={14} fill="currentColor" />
-                    Resume
-                  </button>
-                )}
-                
-                <button 
-                  onClick={handleStopCampaign}
-                  className="flex-1 py-4 px-4 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-red-950/40 text-red-400 border border-red-900/50 hover:bg-red-900/40 hover:text-red-300 shadow-[0_0_20px_rgba(220,38,38,0.1)] active:scale-[0.98]"
-                >
-                  <Square size={14} fill="currentColor" />
-                  Stop
-                </button>
-              </div>
-            )}
+
           </div>
 
           {/* RIGHT COLUMN: TERMINAL & TRACKER */}
@@ -408,7 +416,7 @@ export default function Dashboard() {
                   </div>
                   <div className="flex gap-4">
                     <span className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-zinc-400"/> {sentList.length} Sent</span>
-                    <span className="flex items-center gap-1.5"><FastForward size={12} className="text-zinc-500"/> {skippedList.length} Skip</span>
+                    <span className="flex items-center gap-1.5"><SkipForward size={12} strokeWidth={1.75} className="text-zinc-500"/> {skippedList.length} Skip</span>
                   </div>
                 </div>
               </div>
@@ -448,7 +456,7 @@ export default function Dashboard() {
                     onClick={() => setActiveTab("logs")}
                     className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "logs" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                   >
-                    <TerminalSquare size={14} /> Live Logs
+                    <Terminal size={14} strokeWidth={1.75} /> Live Logs
                   </button>
                 <button 
                   onClick={() => setActiveTab("success")}
@@ -460,7 +468,7 @@ export default function Dashboard() {
                   onClick={() => setActiveTab("skipped")}
                   className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "skipped" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                 >
-                  <FastForward size={14} /> Skipped ({skippedList.length})
+                  <SkipForward size={14} strokeWidth={1.75} /> Skipped ({skippedList.length})
                 </button>
                 <button 
                   onClick={() => setActiveTab("failed")}
@@ -539,7 +547,7 @@ export default function Dashboard() {
                             <p className="text-zinc-500">{item.email}</p>
                           </div>
                           <span className="text-zinc-500 flex items-center gap-1.5 border border-zinc-800 px-2 py-1 rounded bg-zinc-950 text-xs">
-                            <FastForward size={12}/> {item.reason}
+                            <SkipForward size={12} strokeWidth={1.75} /> {item.reason}
                           </span>
                         </div>
                       ))
