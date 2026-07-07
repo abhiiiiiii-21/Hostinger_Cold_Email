@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -54,6 +54,28 @@ export default function HistoryPage() {
     }
   };
 
+  const handleDeleteCampaign = async (campaignId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const confirmed = window.confirm("Are you sure you want to delete this campaign? This action cannot be undone.");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/history/${campaignId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setHistory(prev => prev.filter(c => c.id !== campaignId));
+        if (expandedCampaign === campaignId) {
+          setExpandedCampaign(null);
+        }
+      } else {
+        alert("Failed to delete campaign.");
+      }
+    } catch (err) {
+      alert("Error deleting campaign.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -73,6 +95,7 @@ export default function HistoryPage() {
               <th className="px-6 py-4 text-blue-400">Opens</th>
               <th className="px-6 py-4 text-amber-500">Skipped</th>
               <th className="px-6 py-4 text-red-500">Failed</th>
+              <th className="px-6 py-4"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800/50">
@@ -97,12 +120,21 @@ export default function HistoryPage() {
                   <td className="px-6 py-4 font-mono text-blue-400">{run.opens || 0}</td>
                   <td className="px-6 py-4 font-mono text-amber-400">{run.skipped}</td>
                   <td className="px-6 py-4 font-mono text-red-400">{run.failed}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={(e) => handleDeleteCampaign(run.id, e)}
+                      className="text-zinc-500 hover:text-red-400 transition p-1.5 rounded hover:bg-red-950/30"
+                      title="Delete Campaign"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </tr>
                 
                 {/* Expanded Tracking Details */}
                 {expandedCampaign === run.id && (
                   <tr className="bg-zinc-950/80 border-t-0 shadow-inner">
-                    <td colSpan={8} className="p-0">
+                    <td colSpan={9} className="p-0">
                       <div className="p-6 border-b border-zinc-800/60 bg-black/20">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="text-sm font-semibold text-zinc-200 flex items-center gap-2">
@@ -191,7 +223,7 @@ export default function HistoryPage() {
             ))}
             {history.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">No campaigns run yet.</td>
+                <td colSpan={9} className="px-6 py-12 text-center text-zinc-500">No campaigns run yet.</td>
               </tr>
             )}
           </tbody>

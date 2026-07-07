@@ -381,6 +381,14 @@ def get_history():
 def get_campaign_tracking_endpoint(campaign_id: int):
     return database.get_campaign_tracking(campaign_id)
 
+@app.delete("/api/history/{campaign_id}")
+def delete_campaign_endpoint(campaign_id: int):
+    try:
+        database.delete_campaign(campaign_id)
+        return {"status": "success", "message": f"Campaign {campaign_id} deleted."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/stop")
 def stop_campaign():
     if not global_state.is_running:
