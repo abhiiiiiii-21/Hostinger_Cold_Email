@@ -11,6 +11,8 @@ export default function HistoryPage() {
   const [campaignTracking, setCampaignTracking] = useState<any[]>([]);
   const [trackingFilter, setTrackingFilter] = useState<"all" | "opened" | "unopened">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteModalOpen, setDeleteModalOpen] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   const filteredTracking = campaignTracking.filter(track => {
@@ -54,26 +56,27 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDeleteCampaign = async (campaignId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const confirmed = window.confirm("Are you sure you want to delete this campaign? This action cannot be undone.");
-    if (!confirmed) return;
+  const confirmDelete = async () => {
+    if (deleteModalOpen === null) return;
+    setIsDeleting(true);
 
     try {
-      const res = await fetch(`${API_BASE}/history/${campaignId}`, {
+      const res = await fetch(`${API_BASE}/history/${deleteModalOpen}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setHistory(prev => prev.filter(c => c.id !== campaignId));
-        if (expandedCampaign === campaignId) {
+        setHistory(prev => prev.filter(c => c.id !== deleteModalOpen));
+        if (expandedCampaign === deleteModalOpen) {
           setExpandedCampaign(null);
         }
+        setDeleteModalOpen(null);
       } else {
         alert("Failed to delete campaign.");
       }
     } catch (err) {
       alert("Error deleting campaign.");
     }
+    setIsDeleting(false);
   };
 
   return (
@@ -122,7 +125,7 @@ export default function HistoryPage() {
                   <td className="px-6 py-4 font-mono text-red-400">{run.failed}</td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={(e) => handleDeleteCampaign(run.id, e)}
+                      onClick={(e) => { e.stopPropagation(); setDeleteModalOpen(run.id); }}
                       className="text-zinc-500 hover:text-red-400 transition p-1.5 rounded hover:bg-red-950/30"
                       title="Delete Campaign"
                     >
@@ -266,6 +269,33 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      {deleteModalOpen !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-lg font-semibold text-zinc-100">Delete Campaign</h2>
+            <p className="text-sm text-zinc-400 mt-2">
+              Are you sure you want to completely delete campaign #{deleteModalOpen}? This action cannot be undone and will permanently remove all associated analytics.
+            </p>
+            <div className="flex justify-end gap-3 mt-6">
+              <button 
+                onClick={() => setDeleteModalOpen(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
