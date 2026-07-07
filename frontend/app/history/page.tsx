@@ -126,7 +126,7 @@ export default function HistoryPage() {
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setDeleteModalOpen(run.id); }}
-                      className="text-zinc-500 hover:text-red-400 transition p-1.5 rounded hover:bg-red-950/30"
+                      className="cursor-pointer text-zinc-500 hover:text-red-400 transition p-1.5 rounded hover:bg-red-950/30"
                       title="Delete Campaign"
                     >
                       <Trash2 size={16} />
@@ -146,9 +146,9 @@ export default function HistoryPage() {
                           </h4>
                           <div className="flex items-center gap-3">
                             <div className="flex items-center bg-zinc-900/50 rounded-lg p-0.5 border border-zinc-800/80">
-                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("all"); }} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "all" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>All</button>
-                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("opened"); }} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "opened" ? "bg-emerald-950/50 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"}`}>Opened</button>
-                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("unopened"); }} className={`px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "unopened" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>Unopened</button>
+                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("all"); }} className={`cursor-pointer px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "all" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>All</button>
+                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("opened"); }} className={`cursor-pointer px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "opened" ? "bg-emerald-950/50 text-emerald-400" : "text-zinc-500 hover:text-zinc-300"}`}>Opened</button>
+                              <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("unopened"); }} className={`cursor-pointer px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "unopened" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>Unopened</button>
                             </div>
                             <span className="text-xs font-medium text-zinc-500">{filteredTracking.length} / {campaignTracking.length} Sent Emails</span>
                           </div>
@@ -241,7 +241,7 @@ export default function HistoryPage() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
+                className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" strokeWidth={1.75} />
                 Previous
@@ -251,7 +251,7 @@ export default function HistoryPage() {
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
-                    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none h-9 w-9 ${currentPage === i + 1 ? 'border border-zinc-700 bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-200'}`}
+                    className={`cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none h-9 w-9 ${currentPage === i + 1 ? 'border border-zinc-700 bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-200'}`}
                   >
                     {i + 1}
                   </button>
@@ -260,7 +260,7 @@ export default function HistoryPage() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(Math.ceil(history.length / ITEMS_PER_PAGE), p + 1))}
                 disabled={currentPage === Math.ceil(history.length / ITEMS_PER_PAGE)}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
+                className="cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 border border-zinc-800 bg-transparent hover:bg-zinc-800 hover:text-zinc-100 h-9 px-4 py-2 text-zinc-300"
               >
                 Next
                 <ChevronRight className="h-4 w-4 ml-1" strokeWidth={1.75} />
@@ -281,14 +281,14 @@ export default function HistoryPage() {
               <button 
                 onClick={() => setDeleteModalOpen(null)}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition disabled:opacity-50"
+                className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition disabled:opacity-50"
               >
                 Cancel
               </button>
               <button 
                 onClick={confirmDelete}
                 disabled={isDeleting}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
+                className="cursor-pointer px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50 flex items-center gap-2"
               >
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
