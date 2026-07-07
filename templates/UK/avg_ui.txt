@@ -2,18 +2,12 @@ Subject: A thought on {company_name}'s website
 
 Hi {first_name},
 
-I came across {company_name} while looking into realtors in {city}. Solid site overall,
-but I think a few tweaks to layout and flow could help turn more visitors into actual
-inquiries.
+I came across {company_name} while looking into realtors in {city}. Solid site overall, but I think a few tweaks to layout and flow could help turn more visitors into actual inquiries.
 
-Here's an example of the kind of cleaner, more conversion-focused design I mean:
-https://real-estate-websual.vercel.app
+Here's an example of the kind of cleaner, more conversion-focused design I mean: https://real-estate-websual.vercel.app
 
-And here's a similar redesign we recently completed for another realtor:
-https://websual-christopher.vercel.app
+And here's a similar redesign we recently completed for another realtor: https://websual-christopher.vercel.app
 
 If it's not for you, no worries at all, just wanted to flag it in case it's useful.
 
-Best regards,
-Websual
-https://www.websual.agency
+Best regards, Websual https://www.websual.agency

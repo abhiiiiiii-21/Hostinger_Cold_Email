@@ -2,16 +2,13 @@ Subject: {company_name}: design + Google, both fixable
 
 Hi {first_name},
 
-Checking out realtors in {city}, and {company_name}'s site had two things that stood
-out: the design feels outdated, and it's likely missing out on local Google traffic.
+Checking out realtors in {city}, and {company_name}'s site had two things that stood out: the design feels outdated, and it's likely missing out on local Google traffic.
 
 Here's a quick example showing both fixed: https://real-estate-websual.vercel.app
 
-And here's a similar project we recently delivered for another client,
+And here's a similar project we recently delivered for another client, 
 Website: https://websual-christopher.vercel.app
 
 No pressure, just thought it might be worth 5 minutes if you're open to it.
 
-Best regards,
-Websual
-https://www.websual.agency
+Best regards, Websual https://www.websual.agency

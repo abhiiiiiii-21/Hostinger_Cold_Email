@@ -79,6 +79,12 @@ def render_template(template: str, lead: Dict[str, str]) -> str:
         template = re.sub(r"for \{company_name\}", "for you", template, flags=re.IGNORECASE)
         template = re.sub(r"\{company_name\}", "your agency", template, flags=re.IGNORECASE)
 
+    # Smart fallback for missing city to prevent grammar errors (e.g. "realtors in .")
+    if not context.get("city"):
+        template = re.sub(r"in \{city\}", "in your area", template, flags=re.IGNORECASE)
+        template = re.sub(r"around \{city\}", "around your area", template, flags=re.IGNORECASE)
+        template = re.sub(r"\{city\}", "your local area", template, flags=re.IGNORECASE)
+
     def _replacer(match: re.Match) -> str:
         """Return the placeholder value, or empty string if missing."""
         key = match.group(1)

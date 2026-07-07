@@ -2,18 +2,14 @@ Subject: {company_name}'s website - a quick observation
 
 Hi {first_name},
 
-I was browsing realtors in {city} and landed on {company_name}'s site. The design felt a
-bit dated compared to what buyers typically expect these days, which might be quietly
-turning people away.
+I was browsing realtors in {city} and landed on {company_name}'s site. The design felt a bit dated compared to what buyers typically expect these days, which might be quietly turning people away.
 
-Mocked up a quick example of a more modern take, if you're curious.
+Mocked up a quick example of a more modern take, if you're curious. 
 Website: https://real-estate-websual.vercel.app
 
-Here's a similar project we recently completed for another realtor,
+Here's a similar project we recently completed for another realtor, 
 Website: https://websual-christopher.vercel.app
 
 Totally fine if it's not something you're looking into, just wanted to share.
 
-Best regards,
-Websual
-https://www.websual.agency
+Best regards, Websual https://www.websual.agency
