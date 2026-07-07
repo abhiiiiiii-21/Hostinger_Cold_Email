@@ -206,7 +206,7 @@ export default function Dashboard() {
             <button 
               onClick={handleRunCampaign}
               disabled={!file || backendStatus === "offline"}
-              className={`py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 ${
+              className={`py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer ${
                 !file || backendStatus === "offline"
                   ? "bg-zinc-900 text-zinc-600 border border-zinc-800 cursor-not-allowed" 
                   : "bg-zinc-100 hover:bg-white text-zinc-900 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] active:scale-[0.98]"
@@ -220,7 +220,7 @@ export default function Dashboard() {
               {!isPaused ? (
                 <button 
                   onClick={handlePauseCampaign}
-                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-amber-950/40 text-amber-400 border border-amber-900/50 hover:bg-amber-900/40 hover:text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.1)] active:scale-[0.98]"
+                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer bg-amber-950/40 text-amber-400 border border-amber-900/50 hover:bg-amber-900/40 hover:text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.1)] active:scale-[0.98]"
                 >
                   <Pause size={14} strokeWidth={1.75} fill="currentColor" />
                   Pause
@@ -228,7 +228,7 @@ export default function Dashboard() {
               ) : (
                 <button 
                   onClick={handleResumeCampaign}
-                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 hover:bg-emerald-900/40 hover:text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.1)] active:scale-[0.98]"
+                  className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer bg-emerald-950/40 text-emerald-400 border border-emerald-900/50 hover:bg-emerald-900/40 hover:text-emerald-300 shadow-[0_0_20px_rgba(52,211,153,0.1)] active:scale-[0.98]"
                 >
                   <Play size={14} fill="currentColor" />
                   Resume
@@ -237,7 +237,7 @@ export default function Dashboard() {
               
               <button 
                 onClick={handleStopCampaign}
-                className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-red-950/40 text-red-400 border border-red-900/50 hover:bg-red-900/40 hover:text-red-300 shadow-[0_0_20px_rgba(220,38,38,0.1)] active:scale-[0.98]"
+                className="py-3 px-6 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer bg-red-950/40 text-red-400 border border-red-900/50 hover:bg-red-900/40 hover:text-red-300 shadow-[0_0_20px_rgba(220,38,38,0.1)] active:scale-[0.98]"
               >
                 <Square size={14} strokeWidth={1.75} fill="currentColor" />
                 Stop
@@ -263,13 +263,12 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target Country</label>
                   <select 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner cursor-pointer"
                     value={selectedCountry}
                     onChange={(e) => setSelectedCountry(e.target.value)}
                   >
                     <option value="USA">United States</option>
                     <option value="UK">United Kingdom</option>
-                    <option value="UAE">United Arab Emirates</option>
                   </select>
                 </div>
 
@@ -277,7 +276,7 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target Email Field</label>
                   <select 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner cursor-pointer"
                     value={emailTarget}
                     onChange={(e) => setEmailTarget(e.target.value)}
                   >
@@ -454,25 +453,25 @@ export default function Dashboard() {
                 <div className="flex items-center">
                   <button 
                     onClick={() => setActiveTab("logs")}
-                    className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "logs" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
+                    className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap cursor-pointer ${activeTab === "logs" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                   >
                     <Terminal size={14} strokeWidth={1.75} /> Live Logs
                   </button>
                 <button 
                   onClick={() => setActiveTab("success")}
-                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "success" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
+                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap cursor-pointer ${activeTab === "success" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                 >
                   <CheckCircle2 size={14} /> Sent ({sentList.length})
                 </button>
                 <button 
                   onClick={() => setActiveTab("skipped")}
-                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "skipped" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
+                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap cursor-pointer ${activeTab === "skipped" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                 >
                   <SkipForward size={14} strokeWidth={1.75} /> Skipped ({skippedList.length})
                 </button>
                 <button 
                   onClick={() => setActiveTab("failed")}
-                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap ${activeTab === "failed" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
+                  className={`flex items-center gap-2 px-5 py-3 transition whitespace-nowrap cursor-pointer ${activeTab === "failed" ? "text-zinc-100 border-b border-zinc-300 bg-zinc-900/50" : "text-zinc-500 hover:text-zinc-300"}`}
                 >
                   <XCircle size={14} /> Failed ({failedList.length})
                 </button>
