@@ -5,6 +5,7 @@ TEMPLATE_MAP = {
     frozenset({"not_opening"}): "not_opening.txt",
     frozenset({"seo", "bad_ui"}): "bad_ui_seo.txt",
     frozenset({"seo", "avg_ui"}): "avg_ui_seo.txt",
+    frozenset({"in_making"}): "website_in_making.txt",
 }
 
 
@@ -33,6 +34,16 @@ def classify(review: str):
         or "site down" in review
     ):
         issues.add("not_opening")
+
+    # Website in making (coming soon)
+    if (
+        "coming soon" in review
+        or "website in making" in review
+        or "coming soon" in review
+        or "making" in review
+        or "under construction" in review
+    ):
+        issues.add("in_making")
 
     # Good UI (skip)
     if "good ui" in review:

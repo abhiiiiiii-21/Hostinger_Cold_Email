@@ -4,7 +4,7 @@ from email.header import decode_header
 import ssl
 import os
 from dotenv import load_dotenv
-from . import database
+import database
 import datetime
 import traceback
 

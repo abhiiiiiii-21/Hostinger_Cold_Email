@@ -1,0 +1,15 @@
+Subject: {company_name}'s website still says "coming soon"
+
+Hi {first_name},
+
+I was checking out realtors in {city} and noticed {company_name}'s website still shows a "coming soon" page. Every day it's not live, potential buyers can't find you, or land on a blank page and move on to a competitor.
+
+I put together a quick example of what a fast, modern site could look like, live in days rather than a long build: https://real-estate-websual.vercel.app
+
+Here's a similar project we recently completed for another client: https://websual-christopher.vercel.app/
+
+Happy to put something together specifically for {company_name}, no charge to take a look.
+
+Best regards,
+Websual
+https://www.websual.agency

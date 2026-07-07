@@ -12,16 +12,16 @@ from fastapi import FastAPI, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import existing modules
-from .csv_reader import CSVReader
-from .classifier import classify, choose_template
-from .template_loader import load_template
-from .template_renderer import render_template
-from .html_renderer import convert_to_html
-from .template_parser import parse_template
-from .sender import send_email
-from . import logger
-from . import database
-from . import replies
+from csv_reader import CSVReader
+from classifier import classify, choose_template
+from template_loader import load_template
+from template_renderer import render_template
+from html_renderer import convert_to_html
+from template_parser import parse_template
+from sender import send_email
+import logger
+import database
+import replies
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
