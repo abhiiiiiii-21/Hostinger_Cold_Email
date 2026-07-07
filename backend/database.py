@@ -21,7 +21,8 @@ def init_db():
             sent INTEGER,
             failed INTEGER,
             skipped INTEGER,
-            email_target TEXT DEFAULT 'email'
+            email_target TEXT DEFAULT 'email',
+            user_id TEXT
         )
     """)
     cursor.execute("""
@@ -35,7 +36,8 @@ def init_db():
             open_count INTEGER DEFAULT 0,
             campaign_id INTEGER,
             website_review TEXT,
-            recipient_name TEXT
+            recipient_name TEXT,
+            user_id TEXT
         )
     """)
     cursor.execute("""
@@ -45,7 +47,8 @@ def init_db():
             email TEXT,
             subject TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT
+            status TEXT,
+            user_id TEXT
         )
     """)
     cursor.execute("""
@@ -56,7 +59,8 @@ def init_db():
             subject TEXT,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             status TEXT,
-            error TEXT
+            error TEXT,
+            user_id TEXT
         )
     """)
     cursor.execute("""
@@ -67,7 +71,8 @@ def init_db():
             bounce_reason TEXT,
             date_bounced TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             contact_name TEXT,
-            city TEXT
+            city TEXT,
+            user_id TEXT
         )
     """)
     cursor.execute("""
@@ -75,40 +80,41 @@ def init_db():
             id SERIAL PRIMARY KEY,
             email TEXT,
             date_replied TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            subject TEXT
+            subject TEXT,
+            user_id TEXT
         )
     """)
     conn.commit()
     cursor.close()
     conn.close()
 
-def create_campaign_log(country: str, total_leads: int, email_target: str = "email") -> int:
+def create_campaign_log(country: str, total_leads: int, user_id: str, email_target: str = "email") -> int:
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO campaigns (timestamp, country, total_leads, sent, failed, skipped, email_target)
-        VALUES (%s, %s, %s, 0, 0, 0, %s)
+        INSERT INTO campaigns (timestamp, country, total_leads, sent, failed, skipped, email_target, user_id)
+        VALUES (%s, %s, %s, 0, 0, 0, %s, %s)
         RETURNING id
-    """, (datetime.datetime.now(), country, total_leads, email_target))
+    """, (datetime.datetime.now(), country, total_leads, email_target, user_id))
     campaign_id = cursor.fetchone()[0]
     conn.commit()
     cursor.close()
     conn.close()
     return campaign_id
 
-def update_campaign_log(campaign_id: int, sent: int, failed: int, skipped: int):
+def update_campaign_log(campaign_id: int, sent: int, failed: int, skipped: int, user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE campaigns
         SET sent = %s, failed = %s, skipped = %s
-        WHERE id = %s
-    """, (sent, failed, skipped, campaign_id))
+        WHERE id = %s AND user_id = %s
+    """, (sent, failed, skipped, campaign_id, user_id))
     conn.commit()
     cursor.close()
     conn.close()
 
-def get_recent_campaigns(limit=50):
+def get_recent_campaigns(user_id: str, limit=50):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
@@ -116,9 +122,10 @@ def get_recent_campaigns(limit=50):
                (SELECT COUNT(*) FROM email_tracking e WHERE e.campaign_id = c.id AND e.open_count > 0) AS opens,
                c.email_target
         FROM campaigns c
+        WHERE c.user_id = %s
         ORDER BY c.timestamp DESC 
         LIMIT %s
-    """, (limit,))
+    """, (user_id, limit))
     
     rows = cursor.fetchall()
     cursor.close()
@@ -139,13 +146,13 @@ def get_recent_campaigns(limit=50):
         })
     return campaigns
 
-def log_email_sent(tracking_id: str, email: str, company: str, campaign_id: int = None, website_review: str = "", recipient_name: str = ""):
+def log_email_sent(tracking_id: str, email: str, company: str, user_id: str, campaign_id: int = None, website_review: str = "", recipient_name: str = ""):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO email_tracking (tracking_id, email, company, sent_at, campaign_id, website_review, recipient_name)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (tracking_id, email, company, datetime.datetime.now(), campaign_id, website_review, recipient_name))
+        INSERT INTO email_tracking (tracking_id, email, company, sent_at, campaign_id, website_review, recipient_name, user_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (tracking_id, email, company, datetime.datetime.now(), campaign_id, website_review, recipient_name, user_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -162,7 +169,7 @@ def log_email_opened(tracking_id: str):
     cursor.close()
     conn.close()
 
-def delete_campaign(campaign_id: int):
+def delete_campaign(campaign_id: int, user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     # Delete associated success logs by matching email within the timeframe of this campaign
@@ -172,26 +179,27 @@ def delete_campaign(campaign_id: int):
             SELECT s.id 
             FROM success_logs s
             JOIN email_tracking e ON s.email = e.email
-            WHERE e.campaign_id = %s
+            WHERE e.campaign_id = %s AND e.user_id = %s
             AND s.timestamp >= e.sent_at - INTERVAL '2 minute'
             AND s.timestamp <= e.sent_at + INTERVAL '2 minute'
         )
-    """, (campaign_id,))
-    cursor.execute("DELETE FROM email_tracking WHERE campaign_id = %s", (campaign_id,))
-    cursor.execute("DELETE FROM campaigns WHERE id = %s", (campaign_id,))
+    """, (campaign_id, user_id))
+    cursor.execute("DELETE FROM email_tracking WHERE campaign_id = %s AND user_id = %s", (campaign_id, user_id))
+    cursor.execute("DELETE FROM campaigns WHERE id = %s AND user_id = %s", (campaign_id, user_id))
     conn.commit()
     cursor.close()
     conn.close()
 
-def get_tracking_stats():
+def get_tracking_stats(user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT tracking_id, email, company, sent_at, opened_at, open_count
         FROM email_tracking
+        WHERE user_id = %s
         ORDER BY sent_at DESC
         LIMIT 100
-    """)
+    """, (user_id,))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -208,7 +216,7 @@ def get_tracking_stats():
         })
     return tracking_data
 
-def get_dashboard_stats():
+def get_dashboard_stats(user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     
@@ -219,61 +227,54 @@ def get_dashboard_stats():
         "hard_bounce_rate": 0, "soft_bounce_rate": 0
     }
     
-    # Today sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE user_id = %s AND DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')", (user_id,))
     stats["today"] = cursor.fetchone()[0]
     
-    # Yesterday sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE user_id = %s AND DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'", (user_id,))
     stats["yesterday"] = cursor.fetchone()[0]
     
-    # Month sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE date_trunc('month', timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE user_id = %s AND date_trunc('month', timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')", (user_id,))
     stats["month"] = cursor.fetchone()[0]
     
-    # Today opens (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE user_id = %s AND open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')", (user_id,))
     stats["today_opens"] = cursor.fetchone()[0]
 
-    # Yesterday opens (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE user_id = %s AND open_count > 0 AND DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'", (user_id,))
     stats["yesterday_opens"] = cursor.fetchone()[0]
 
-    # Month opens (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE open_count > 0 AND date_trunc('month', sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE user_id = %s AND open_count > 0 AND date_trunc('month', sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')", (user_id,))
     stats["month_opens"] = cursor.fetchone()[0]
     
-    # Total Replies
-    cursor.execute("SELECT COUNT(*) FROM replies")
+    cursor.execute("SELECT COUNT(*) FROM replies WHERE user_id = %s", (user_id,))
     stats["total_replies"] = cursor.fetchone()[0]
 
-    # Total Sent (all time) for rate calculation
-    cursor.execute("SELECT COUNT(*) FROM success_logs")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE user_id = %s", (user_id,))
     total_sent = cursor.fetchone()[0]
 
     if total_sent > 0:
         stats["reply_rate"] = round((stats["total_replies"] / total_sent) * 100, 2)
         
-        cursor.execute("SELECT COUNT(*) FROM bounces WHERE bounce_type = 'hard'")
+        cursor.execute("SELECT COUNT(*) FROM bounces WHERE user_id = %s AND bounce_type = 'hard'", (user_id,))
         hard_bounces = cursor.fetchone()[0]
         stats["hard_bounce_rate"] = round((hard_bounces / total_sent) * 100, 2)
         
-        cursor.execute("SELECT COUNT(*) FROM bounces WHERE bounce_type = 'soft'")
+        cursor.execute("SELECT COUNT(*) FROM bounces WHERE user_id = %s AND bounce_type = 'soft'", (user_id,))
         soft_bounces = cursor.fetchone()[0]
         stats["soft_bounce_rate"] = round((soft_bounces / total_sent) * 100, 2)
     
     cursor.close()
     conn.close()
     return stats
-def get_campaign_tracking(campaign_id: int):
+
+def get_campaign_tracking(campaign_id: int, user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT tracking_id, email, company, sent_at, opened_at, open_count, website_review, recipient_name
         FROM email_tracking
-        WHERE campaign_id = %s
+        WHERE campaign_id = %s AND user_id = %s
         ORDER BY sent_at DESC
-    """, (campaign_id,))
+    """, (campaign_id, user_id))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -295,18 +296,23 @@ def get_campaign_tracking(campaign_id: int):
 def log_bounce(email: str, bounce_type: str, reason: str, contact_name: str = "", city: str = ""):
     conn = get_db()
     cursor = conn.cursor()
+    # Find the user_id from the original email tracking
+    cursor.execute("SELECT user_id FROM email_tracking WHERE email = %s ORDER BY sent_at DESC LIMIT 1", (email,))
+    row = cursor.fetchone()
+    user_id = row[0] if row else None
+    
     cursor.execute("""
-        INSERT INTO bounces (email, bounce_type, bounce_reason, date_bounced, contact_name, city)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (email, bounce_type, reason, datetime.datetime.now(), contact_name, city))
+        INSERT INTO bounces (email, bounce_type, bounce_reason, date_bounced, contact_name, city, user_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (email, bounce_type, reason, datetime.datetime.now(), contact_name, city, user_id))
     conn.commit()
     cursor.close()
     conn.close()
 
-def is_hard_bounced(email: str) -> bool:
+def is_hard_bounced(email: str, user_id: str) -> bool:
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM bounces WHERE email = %s AND bounce_type = 'hard' LIMIT 1", (email,))
+    cursor.execute("SELECT 1 FROM bounces WHERE email = %s AND user_id = %s AND bounce_type = 'hard' LIMIT 1", (email, user_id))
     result = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -315,22 +321,28 @@ def is_hard_bounced(email: str) -> bool:
 def log_reply(email: str, date_replied, subject: str):
     conn = get_db()
     cursor = conn.cursor()
+    # Find the user_id from the original email tracking
+    cursor.execute("SELECT user_id FROM email_tracking WHERE email = %s ORDER BY sent_at DESC LIMIT 1", (email,))
+    row = cursor.fetchone()
+    user_id = row[0] if row else None
+    
     cursor.execute("""
-        INSERT INTO replies (email, date_replied, subject)
-        VALUES (%s, %s, %s)
-    """, (email, date_replied, subject))
+        INSERT INTO replies (email, date_replied, subject, user_id)
+        VALUES (%s, %s, %s, %s)
+    """, (email, date_replied, subject, user_id))
     conn.commit()
     cursor.close()
     conn.close()
 
-def get_bounced_contacts():
+def get_bounced_contacts(user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT email, bounce_type, bounce_reason, date_bounced, contact_name, city
         FROM bounces
+        WHERE user_id = %s
         ORDER BY date_bounced DESC
-    """)
+    """, (user_id,))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -347,13 +359,9 @@ def get_bounced_contacts():
         })
     return bounces
 
-def get_daily_trend_stats(days: int = 30):
-    """Aggregates daily sent, opens, and replies from existing tables for the trend chart."""
+def get_daily_trend_stats(user_id: str, days: int = 30):
     conn = get_db()
     cursor = conn.cursor()
-    
-    # days is always an integer so safe to format directly; PostgreSQL doesn't allow
-    # parameterized INTERVAL values.
     days = int(days)
     
     cursor.execute(f"""
@@ -367,19 +375,19 @@ def get_daily_trend_stats(days: int = 30):
         daily_sent AS (
             SELECT DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS day, COUNT(*) AS sent
             FROM success_logs
-            WHERE timestamp >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
+            WHERE user_id = %s AND timestamp >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
             GROUP BY day
         ),
         daily_opens AS (
             SELECT DATE(opened_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS day, COUNT(*) AS opens
             FROM email_tracking
-            WHERE open_count > 0 AND opened_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
+            WHERE user_id = %s AND open_count > 0 AND opened_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
             GROUP BY day
         ),
         daily_replies AS (
             SELECT DATE(date_replied AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS day, COUNT(*) AS replies
             FROM replies
-            WHERE date_replied >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
+            WHERE user_id = %s AND date_replied >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
             GROUP BY day
         )
         SELECT 
@@ -392,7 +400,7 @@ def get_daily_trend_stats(days: int = 30):
         LEFT JOIN daily_opens dop ON dr.day = dop.day
         LEFT JOIN daily_replies drp ON dr.day = drp.day
         ORDER BY dr.day ASC
-    """)
+    """, (user_id, user_id, user_id))
     
     rows = cursor.fetchall()
     cursor.close()
@@ -407,4 +415,3 @@ def get_daily_trend_stats(days: int = 30):
         }
         for row in rows
     ]
-

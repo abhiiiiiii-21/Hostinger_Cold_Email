@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Send, LayoutDashboard, History, Zap, ShieldBan } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -59,6 +60,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             }`}></div>
             {backendStatus === "online" ? "System Online" : backendStatus === "error" ? "System Error" : "System Offline"}
           </span>
+          <div className="flex items-center justify-center">
+            <UserButton />
+          </div>
         </div>
       </header>
 
