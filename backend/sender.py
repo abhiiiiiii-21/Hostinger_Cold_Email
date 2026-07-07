@@ -155,13 +155,15 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
         pixel_url = f"{tracking_base_url.rstrip('/')}/api/track/{tracking_id}.png"
         pixel_html = f'<img src="{pixel_url}" width="1" height="1" style="display:none;" alt="" />'
         
-        # Insert pixel right before </body> if present, else append to the end
+        # Add invisible unique text to bypass Gmail's signature/quote truncation (the 3 dots accordion)
+        anti_clip_text = f'<div style="display: none; max-height: 0px; overflow: hidden;">{tracking_id}</div>'
+        injection = f'{anti_clip_text}\n{pixel_html}'
+        
+        # Insert right before </body> if present, else append to the end
         if "</body>" in html_body.lower():
-            # Doing a case-insensitive replacement is a bit tricky, but simple str replace usually works
-            # assuming </body> is lowercase. Let's use simple replace or append.
-            html_body = re.sub(r'</body>', f'{pixel_html}</body>', html_body, flags=re.IGNORECASE)
+            html_body = re.sub(r'</body>', f'{injection}\n</body>', html_body, flags=re.IGNORECASE)
         else:
-            html_body += f'\n{pixel_html}'
+            html_body += f'\n{injection}'
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
