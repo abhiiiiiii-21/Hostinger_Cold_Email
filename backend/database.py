@@ -165,6 +165,18 @@ def log_email_opened(tracking_id: str):
 def delete_campaign(campaign_id: int):
     conn = get_db()
     cursor = conn.cursor()
+    # Delete associated success logs by matching email within the timeframe of this campaign
+    cursor.execute("""
+        DELETE FROM success_logs
+        WHERE id IN (
+            SELECT s.id 
+            FROM success_logs s
+            JOIN email_tracking e ON s.email = e.email
+            WHERE e.campaign_id = %s
+            AND s.timestamp >= e.sent_at - INTERVAL '2 minute'
+            AND s.timestamp <= e.sent_at + INTERVAL '2 minute'
+        )
+    """, (campaign_id,))
     cursor.execute("DELETE FROM email_tracking WHERE campaign_id = %s", (campaign_id,))
     cursor.execute("DELETE FROM campaigns WHERE id = %s", (campaign_id,))
     conn.commit()
@@ -208,15 +220,15 @@ def get_dashboard_stats():
     }
     
     # Today sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
     stats["today"] = cursor.fetchone()[0]
     
     # Yesterday sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = DATE(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 day'")
     stats["yesterday"] = cursor.fetchone()[0]
     
     # Month sent (IST timezone correction)
-    cursor.execute("SELECT COUNT(*) FROM email_tracking WHERE date_trunc('month', sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
+    cursor.execute("SELECT COUNT(*) FROM success_logs WHERE date_trunc('month', timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') = date_trunc('month', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')")
     stats["month"] = cursor.fetchone()[0]
     
     # Today opens (IST timezone correction)
@@ -236,7 +248,7 @@ def get_dashboard_stats():
     stats["total_replies"] = cursor.fetchone()[0]
 
     # Total Sent (all time) for rate calculation
-    cursor.execute("SELECT COUNT(*) FROM email_tracking")
+    cursor.execute("SELECT COUNT(*) FROM success_logs")
     total_sent = cursor.fetchone()[0]
 
     if total_sent > 0:
@@ -353,9 +365,9 @@ def get_daily_trend_stats(days: int = 30):
             )::date AS day
         ),
         daily_sent AS (
-            SELECT DATE(sent_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS day, COUNT(*) AS sent
-            FROM email_tracking
-            WHERE sent_at >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
+            SELECT DATE(timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') AS day, COUNT(*) AS sent
+            FROM success_logs
+            WHERE timestamp >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata' - INTERVAL '{days} days')
             GROUP BY day
         ),
         daily_opens AS (
