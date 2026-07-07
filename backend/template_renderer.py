@@ -60,6 +60,24 @@ def render_template(template: str, lead: Dict[str, str]) -> str:
         The fully rendered email body with all placeholders substituted.
     """
     context = _build_context(lead)
+    
+    # Capitalize first name and company name if present
+    if context.get("first_name"):
+        context["first_name"] = context["first_name"].strip().title()
+    if context.get("company_name"):
+        context["company_name"] = context["company_name"].strip().title()
+
+    # Smart fallback for missing company name to prevent grammar errors (e.g. "'s website")
+    if not context.get("company_name"):
+        # Fix Subject lines
+        template = re.sub(r"^Subject:\s*\{company_name\}'s", "Subject: Your", template, flags=re.IGNORECASE | re.MULTILINE)
+        template = re.sub(r"^Subject:\s*\{company_name\}:", "Subject: Your website:", template, flags=re.IGNORECASE | re.MULTILINE)
+        template = re.sub(r"^Subject:\s*\{company_name\}", "Subject: Your website", template, flags=re.IGNORECASE | re.MULTILINE)
+        
+        # Fix body grammar
+        template = re.sub(r"\{company_name\}'s", "your", template, flags=re.IGNORECASE)
+        template = re.sub(r"for \{company_name\}", "for you", template, flags=re.IGNORECASE)
+        template = re.sub(r"\{company_name\}", "your agency", template, flags=re.IGNORECASE)
 
     def _replacer(match: re.Match) -> str:
         """Return the placeholder value, or empty string if missing."""
@@ -69,8 +87,11 @@ def render_template(template: str, lead: Dict[str, str]) -> str:
     # Match any {placeholder_name} token in the template
     rendered = re.sub(r"\{(\w+)\}", _replacer, template)
 
-    # Fix greeting if first_name was empty
+    # Fix greeting if first_name was empty (e.g. "Hi ," -> "Hi,")
     rendered = re.sub(r"Hi\s+,", "Hi,", rendered)
+    
+    # Clean up any double spaces caused by missing variables
+    rendered = re.sub(r"  +", " ", rendered)
 
     return rendered
 
