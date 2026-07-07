@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Send, LayoutDashboard, History, Zap, ShieldBan } from "lucide-react";
 
@@ -34,11 +35,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       
       {/* TOP HEADER */}
       <header className="h-16 flex items-center justify-between px-8 bg-zinc-950/30 backdrop-blur-md border-b border-zinc-800/60 sticky top-0 z-10 shrink-0">
-        <div className="flex items-center gap-3 text-zinc-100 font-bold text-lg tracking-tight">
-          <div className="w-8 h-8 bg-zinc-200 rounded-md flex items-center justify-center text-zinc-900 shadow-sm">
-            <Send size={18} strokeWidth={2.5} />
-          </div>
-          <span>Cold Emailing</span>
+        <div className="flex items-center gap-3">
+          <Image 
+            src="/logo/main.png" 
+            alt="Websual Logo" 
+            width={120} 
+            height={32} 
+            className="h-8 w-auto object-contain"
+            priority
+          />
         </div>
         
         <div className="flex items-center gap-4">
