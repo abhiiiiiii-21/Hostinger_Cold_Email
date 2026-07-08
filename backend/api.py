@@ -451,6 +451,10 @@ def single_send_email(
         parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', r'<a href="\1">\1</a>', parts[i])
     body = ''.join(parts)
     
+    # Fix ReactQuill's massive default paragraph margins in email clients
+    # Converts <p> into gapless <div>, so user's manual "Enters" dictate exact spacing
+    body = body.replace("<p>", '<div style="margin: 0; padding: 0;">').replace("</p>", "</div>")
+    
     database.log_email_sent(
         tracking_id, email, company, user_id, 
         campaign_id=None, website_review="", recipient_name=name,
