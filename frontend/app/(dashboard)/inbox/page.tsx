@@ -386,11 +386,6 @@ export default function InboxPage() {
                             <span className="text-[10px] text-zinc-500">
                               {new Date(track.opened_at).toLocaleDateString()} {new Date(track.opened_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                             </span>
-                            {track.city && (
-                              <span className="text-[10px] text-zinc-400 font-medium mt-0.5">
-                                📍 {track.city}
-                              </span>
-                            )}
                           </div>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 text-zinc-500 text-[11px] font-medium border border-zinc-800">
