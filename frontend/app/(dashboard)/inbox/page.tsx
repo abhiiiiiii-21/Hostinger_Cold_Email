@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Send, Users, CheckCircle2, AlertCircle, RefreshCw, Paperclip, X } from "lucide-react";
+import { Send, Users, CheckCircle2, AlertCircle, RefreshCw, Paperclip, X, Trash2 } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 import "react-quill-new/dist/quill.snow.css";
@@ -37,8 +37,7 @@ export default function InboxPage() {
       const token = await getToken();
       const res = await fetch(`${API_BASE}/single-sends/tracking`, {
         headers: {
-          "x-api-key": "websual_dev_secret_key", // Fallback for dev mode
-          "x-user-id": "dev_user_123" // The API currently requires this, usually handled by interceptors in your app, but putting defaults to be safe.
+          "Authorization": `Bearer ${token}`
         }
       });
       if (res.ok) {
@@ -51,8 +50,31 @@ export default function InboxPage() {
     setIsLoading(false);
   };
 
+  const handleDelete = async (trackingId: string) => {
+    if (!window.confirm("Are you sure you want to delete this email record?")) return;
+    
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/single-sends/${trackingId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        fetchTracking();
+      } else {
+        alert("Failed to delete the record");
+      }
+    } catch (err) {
+      console.error("Failed to delete record", err);
+    }
+  };
+
   useEffect(() => {
     fetchTracking();
+    const interval = setInterval(fetchTracking, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSend = async (e: React.FormEvent) => {
@@ -400,6 +422,15 @@ export default function InboxPage() {
                         ) : (
                           <span className="text-zinc-600">-</span>
                         )}
+                        <div className="mt-2 flex justify-end">
+                          <button 
+                            onClick={() => handleDelete(track.tracking_id)} 
+                            className="p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            title="Delete Record"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

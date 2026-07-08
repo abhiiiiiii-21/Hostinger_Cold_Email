@@ -9,6 +9,7 @@ from typing import Dict, List
 import uuid
 import smtplib
 import sys
+import re
 
 from fastapi import FastAPI, UploadFile, File, Form, Response, Depends, HTTPException, Header, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -443,6 +444,16 @@ def single_send_email(
 ):
     tracking_id = str(uuid.uuid4())
     
+    # Auto-link raw URLs that are not already inside tags (naive approach for text nodes)
+    # Split by tags, then replace URLs in text nodes
+    parts = re.split(r'(<[^>]+>)', body)
+    for i in range(0, len(parts), 2):
+        parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', r'<a href="\1">\1</a>', parts[i])
+    body = ''.join(parts)
+    
+    # Replace <p> with <div> to remove default ReactQuill/Gmail gaps
+    body = body.replace("<p>", '<div style="margin: 0; padding: 0;">').replace("</p>", "</div>")
+    
     database.log_email_sent(
         tracking_id, email, company, user_id, 
         campaign_id=None, website_review="", recipient_name=name,
@@ -474,6 +485,15 @@ def single_send_email(
 @app.get("/api/single-sends/tracking")
 def get_single_sends(user_id: str = Depends(get_user_id)):
     return database.get_single_sends_tracking(user_id)
+
+@app.delete("/api/single-sends/{tracking_id}")
+def delete_single_send_endpoint(tracking_id: str, user_id: str = Depends(get_user_id)):
+    try:
+        database.delete_single_send(tracking_id, user_id)
+        return {"status": "success", "message": "Deleted successfully"}
+    except Exception as e:
+        logger.log_failure(user_id, "Unknown", "Unknown", "Delete Single Send", str(e))
+        return {"status": "error", "message": str(e)}
 
 @app.delete("/api/history/{campaign_id}")
 def delete_campaign_endpoint(campaign_id: int, user_id: str = Depends(get_user_id)):

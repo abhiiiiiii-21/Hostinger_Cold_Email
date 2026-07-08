@@ -243,6 +243,14 @@ def delete_campaign(campaign_id: int, user_id: str):
     cursor.close()
     conn.close()
 
+def delete_single_send(tracking_id: str, user_id: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM email_tracking WHERE tracking_id = %s AND user_id = %s AND campaign_id IS NULL", (tracking_id, user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
 def get_tracking_stats(user_id: str):
     conn = get_db()
     cursor = conn.cursor()
@@ -420,7 +428,9 @@ def get_single_sends_tracking(user_id: str):
             "open_count": row[5],
             "website_review": row[6],
             "recipient_name": row[7],
-            "click_count": row[8],
+            "email_subject": row[8],
+            "email_body": row[9],
+            "click_count": row[10],
             "city": row[11],
             "clicks": clicks_by_tracking_id.get(tid, [])
         })
