@@ -41,6 +41,15 @@ def init_db():
         )
     """)
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS link_clicks (
+            id SERIAL PRIMARY KEY,
+            tracking_id TEXT,
+            url TEXT,
+            clicked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            user_id TEXT
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS success_logs (
             id SERIAL PRIMARY KEY,
             company TEXT,
@@ -169,6 +178,22 @@ def log_email_opened(tracking_id: str):
     cursor.close()
     conn.close()
 
+def log_link_click(tracking_id: str, url: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    # Find the user_id from the original email tracking
+    cursor.execute("SELECT user_id FROM email_tracking WHERE tracking_id = %s LIMIT 1", (tracking_id,))
+    row = cursor.fetchone()
+    user_id = row[0] if row else None
+    
+    cursor.execute("""
+        INSERT INTO link_clicks (tracking_id, url, clicked_at, user_id)
+        VALUES (%s, %s, %s, %s)
+    """, (tracking_id, url, datetime.datetime.now(), user_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
 def delete_campaign(campaign_id: int, user_id: str):
     conn = get_db()
     cursor = conn.cursor()
@@ -270,26 +295,52 @@ def get_campaign_tracking(campaign_id: int, user_id: str):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT tracking_id, email, company, sent_at, opened_at, open_count, website_review, recipient_name
-        FROM email_tracking
-        WHERE campaign_id = %s AND user_id = %s
-        ORDER BY sent_at DESC
+        SELECT e.tracking_id, e.email, e.company, e.sent_at, e.opened_at, e.open_count, e.website_review, e.recipient_name,
+               (SELECT COUNT(*) FROM link_clicks lc WHERE lc.tracking_id = e.tracking_id) AS click_count
+        FROM email_tracking e
+        WHERE e.campaign_id = %s AND e.user_id = %s
+        ORDER BY e.sent_at DESC
     """, (campaign_id, user_id))
     rows = cursor.fetchall()
+    
+    # Fetch all clicks for this campaign
+    cursor.execute("""
+        SELECT lc.tracking_id, lc.url, lc.clicked_at
+        FROM link_clicks lc
+        JOIN email_tracking e ON lc.tracking_id = e.tracking_id
+        WHERE e.campaign_id = %s AND e.user_id = %s
+        ORDER BY lc.clicked_at DESC
+    """, (campaign_id, user_id))
+    click_rows = cursor.fetchall()
+    
     cursor.close()
     conn.close()
     
+    # Group clicks by tracking_id
+    clicks_by_tracking_id = {}
+    for click_row in click_rows:
+        tid = click_row[0]
+        if tid not in clicks_by_tracking_id:
+            clicks_by_tracking_id[tid] = []
+        clicks_by_tracking_id[tid].append({
+            "url": click_row[1],
+            "clicked_at": click_row[2].isoformat() if click_row[2] else None
+        })
+    
     tracking_data = []
     for row in rows:
+        tid = row[0]
         tracking_data.append({
-            "tracking_id": row[0],
+            "tracking_id": tid,
             "email": row[1],
             "company": row[2],
             "sent_at": row[3].isoformat() if row[3] else None,
             "opened_at": row[4].isoformat() if row[4] else None,
             "open_count": row[5],
             "website_review": row[6],
-            "recipient_name": row[7]
+            "recipient_name": row[7],
+            "click_count": row[8],
+            "clicks": clicks_by_tracking_id.get(tid, [])
         })
     return tracking_data
 

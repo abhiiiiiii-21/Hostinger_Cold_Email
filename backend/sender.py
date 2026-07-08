@@ -152,6 +152,24 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
 
     if tracking_id:
         tracking_base_url = os.getenv("TRACKING_BASE_URL", "http://localhost:8000")
+        
+        import urllib.parse
+        
+        def replace_link(match):
+            prefix = match.group(1)
+            original_url = match.group(2)
+            suffix = match.group(3)
+            
+            if original_url.lower().startswith(('mailto:', 'tel:', '#')) or '/api/click/' in original_url:
+                return match.group(0)
+                
+            encoded_url = urllib.parse.quote(original_url, safe='')
+            tracking_url = f"{tracking_base_url.rstrip('/')}/api/click/{tracking_id}?url={encoded_url}"
+            return f"{prefix}{tracking_url}{suffix}"
+
+        # Rewrite URLs in <a> tags
+        html_body = re.sub(r'(<a\s+[^>]*href=")([^"]+)(")', replace_link, html_body, flags=re.IGNORECASE)
+        
         pixel_url = f"{tracking_base_url.rstrip('/')}/api/track/{tracking_id}.png"
         pixel_html = f'<img src="{pixel_url}" width="1" height="1" style="display:none;" alt="" />'
         

@@ -12,7 +12,7 @@ import sys
 
 from fastapi import FastAPI, UploadFile, File, Response, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT / "backend"))
@@ -473,6 +473,19 @@ def track_email_open(tracking_id: str):
         b"\x01\x00\x00\x02\x01\x44\x00\x3b"
     )
     return Response(content=transparent_pixel, media_type="image/gif")
+
+@app.get("/api/click/{tracking_id}")
+def track_link_click(tracking_id: str, url: str):
+    """
+    Endpoint to track link clicks and redirect to the original URL.
+    """
+    if url:
+        try:
+            database.log_link_click(tracking_id, url)
+        except Exception as e:
+            print(f"Failed to log link click: {str(e)}")
+        return RedirectResponse(url=url)
+    return JSONResponse(status_code=400, content={"error": "Missing URL parameter"})
 
 @app.get("/api/tracking")
 def get_tracking(user_id: str = Depends(get_user_id)):

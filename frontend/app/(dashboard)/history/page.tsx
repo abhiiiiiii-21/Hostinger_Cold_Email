@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Users, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight, Trash2, Download } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -79,6 +79,61 @@ export default function HistoryPage() {
     setIsDeleting(false);
   };
 
+  const handleDownloadCSV = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (filteredTracking.length === 0) return;
+
+    const headers = [
+      "First Name",
+      "Last Name",
+      "Company Name",
+      "Client Email",
+      "Website Review",
+      "Total Clicks",
+      "Clicked URLs",
+      "Status"
+    ];
+
+    const escapeCsv = (str: string) => `"${(str || "").replace(/"/g, '""')}"`;
+
+    const csvRows = [headers.join(",")];
+
+    filteredTracking.forEach(track => {
+      let clickedUrls = "";
+      if (track.clicks && track.clicks.length > 0) {
+        clickedUrls = track.clicks.map((c: any) => `${c.url} (${new Date(c.clicked_at).toLocaleString()})`).join(" | ");
+      }
+
+      const fullName = track.recipient_name || "";
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const row = [
+        escapeCsv(firstName),
+        escapeCsv(lastName),
+        escapeCsv(track.company),
+        escapeCsv(track.email),
+        escapeCsv(track.website_review),
+        track.click_count || 0,
+        escapeCsv(clickedUrls),
+        escapeCsv(track.open_count > 0 ? "Opened" : "Unopened")
+      ];
+      
+      csvRows.push(row.join(","));
+    });
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `campaign_${expandedCampaign}_tracking_${trackingFilter}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -151,6 +206,15 @@ export default function HistoryPage() {
                               <button onClick={(e) => { e.stopPropagation(); setTrackingFilter("unopened"); }} className={`cursor-pointer px-2.5 py-1 text-xs font-medium rounded-md transition ${trackingFilter === "unopened" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"}`}>Unopened</button>
                             </div>
                             <span className="text-xs font-medium text-zinc-500">{filteredTracking.length} / {campaignTracking.length} Sent Emails</span>
+                            <button
+                              onClick={handleDownloadCSV}
+                              disabled={filteredTracking.length === 0}
+                              className="cursor-pointer ml-2 p-1.5 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-md border border-zinc-800/80 transition disabled:opacity-50 flex items-center gap-1.5"
+                              title="Download CSV"
+                            >
+                              <Download size={14} />
+                              <span className="text-xs font-medium pr-1">CSV</span>
+                            </button>
                           </div>
                         </div>
                         
@@ -166,6 +230,7 @@ export default function HistoryPage() {
                                   <th className="px-4 py-3">Status</th>
                                   <th className="px-4 py-3">Last Opened</th>
                                   <th className="px-4 py-3">Total Opens</th>
+                                  <th className="px-4 py-3">Clicks</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-zinc-800/50">
@@ -210,6 +275,31 @@ export default function HistoryPage() {
                                       </td>
                                       <td className="px-4 py-3 font-mono text-zinc-500">
                                         {track.open_count > 0 ? track.open_count : "-"}
+                                      </td>
+                                      <td className="px-4 py-3 text-xs">
+                                        {track.clicks && track.clicks.length > 0 ? (
+                                          <div className="flex flex-col gap-1.5">
+                                            {track.clicks.map((click: any, idx: number) => {
+                                              try {
+                                                const urlObj = new URL(click.url);
+                                                return (
+                                                  <div key={idx} className="flex flex-col">
+                                                    <a href={click.url} target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[150px]" title={click.url}>
+                                                      {urlObj.hostname.replace('www.', '')}{urlObj.pathname !== '/' ? '...' : ''}
+                                                    </a>
+                                                    <span className="text-[10px] text-zinc-500">
+                                                      {new Date(click.clicked_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                    </span>
+                                                  </div>
+                                                );
+                                              } catch {
+                                                return <span key={idx} className="text-zinc-500">Invalid URL</span>;
+                                              }
+                                            })}
+                                          </div>
+                                        ) : (
+                                          <span className="text-zinc-600">-</span>
+                                        )}
                                       </td>
                                     </tr>
                                   ))
