@@ -10,9 +10,20 @@ import uuid
 import smtplib
 import sys
 
-from fastapi import FastAPI, UploadFile, File, Response, Depends, HTTPException, Header
+from fastapi import FastAPI, UploadFile, File, Form, Response, Depends, HTTPException, Header, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+import urllib.request
+import json
 from fastapi.responses import JSONResponse, RedirectResponse
+from pydantic import BaseModel
+from typing import Optional, List
+
+class SingleSendRequest(BaseModel):
+    email: str
+    name: str = ""
+    company: str = ""
+    subject: str
+    body: str
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT / "backend"))
@@ -93,7 +104,7 @@ def calculate_stats(user_id: str):
     """Reads from database to calculate Today, Yesterday, and Monthly stats."""
     return database.get_dashboard_stats(user_id)
 
-def run_campaign_thread(user_id: str, country: str, force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
+def run_campaign_thread(user_id: str, country: str, city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
     state = get_state_for_user(user_id)
     try:
         state.is_running = True
@@ -137,7 +148,7 @@ def run_campaign_thread(user_id: str, country: str, force_send: bool = False, ba
         logger.init_logs()
         sent_emails = logger.get_sent_emails(user_id)
         
-        campaign_id = database.create_campaign_log(country, len(leads), user_id, email_target=email_column)
+        campaign_id = database.create_campaign_log(country, city, len(leads), user_id, email_target=email_column)
         
         for index, lead in enumerate(leads, start=1):
             if state.stop_requested:
@@ -400,12 +411,12 @@ async def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_u
     }
 
 @app.post("/api/start")
-def start_campaign(country: str = "Unknown", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email", user_id: str = Depends(get_user_id)):
+def start_campaign(country: str = "Unknown", city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email", user_id: str = Depends(get_user_id)):
     state = get_state_for_user(user_id)
     if state.is_running:
         return {"status": "error", "message": "Campaign is already running."}
     
-    thread = threading.Thread(target=run_campaign_thread, args=(user_id, country, force_send, batch_size, cooldown_minutes, email_column))
+    thread = threading.Thread(target=run_campaign_thread, args=(user_id, country, city, force_send, batch_size, cooldown_minutes, email_column))
     thread.daemon = True
     thread.start()
     return {"status": "success", "message": "Campaign started"}
@@ -417,6 +428,52 @@ def get_history(user_id: str = Depends(get_user_id)):
 @app.get("/api/history/{campaign_id}/tracking")
 def get_campaign_tracking_endpoint(campaign_id: int, user_id: str = Depends(get_user_id)):
     return database.get_campaign_tracking(campaign_id, user_id)
+
+@app.post("/api/single-send")
+def single_send_email(
+    email: str = Form(...),
+    cc: str = Form(""),
+    bcc: str = Form(""),
+    name: str = Form(""),
+    company: str = Form(""),
+    subject: str = Form(...),
+    body: str = Form(...),
+    attachments: List[UploadFile] = File(default=[]),
+    user_id: str = Depends(get_user_id)
+):
+    tracking_id = str(uuid.uuid4())
+    
+    database.log_email_sent(
+        tracking_id, email, company, user_id, 
+        campaign_id=None, website_review="", recipient_name=name,
+        email_subject=subject, email_body=body
+    )
+    
+    attached_files = []
+    for f in attachments:
+        if f.filename:
+            content = f.file.read()
+            attached_files.append({"filename": f.filename, "content": content, "content_type": f.content_type})
+    
+    try:
+        send_email(
+            to_email=email,
+            subject=subject,
+            html_body=body,
+            tracking_id=tracking_id,
+            attachments=attached_files,
+            cc=cc,
+            bcc=bcc
+        )
+        logger.log_success(user_id, company, email, subject)
+        return {"status": "success", "message": f"Email sent to {email}"}
+    except Exception as e:
+        logger.log_failure(user_id, company, email, "Single Send", str(e))
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/single-sends/tracking")
+def get_single_sends(user_id: str = Depends(get_user_id)):
+    return database.get_single_sends_tracking(user_id)
 
 @app.delete("/api/history/{campaign_id}")
 def delete_campaign_endpoint(campaign_id: int, user_id: str = Depends(get_user_id)):
@@ -459,13 +516,31 @@ def resume_campaign(user_id: str = Depends(get_user_id)):
     add_log(state, "INFO", "Campaign resumed.")
     return {"status": "success", "message": "Resumed"}
 
+def fetch_city_and_log(tracking_id: str, client_ip: str):
+    city = None
+    if client_ip and client_ip != "127.0.0.1":
+        try:
+            req = urllib.request.Request(f"http://ip-api.com/json/{client_ip}", headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())
+                if data.get("status") == "success":
+                    city = data.get("city")
+        except Exception as e:
+            print(f"GeoIP Error: {e}")
+            
+    database.log_email_opened(tracking_id, city=city)
+
 @app.get("/api/track/{tracking_id}.png")
-def track_email_open(tracking_id: str):
+def track_email_open(tracking_id: str, request: Request, background_tasks: BackgroundTasks):
     """
     Transparent 1x1 pixel endpoint to track email opens.
     This does NOT use user_id because it is triggered by an email client.
     """
-    database.log_email_opened(tracking_id)
+    client_ip = request.headers.get("x-forwarded-for", request.client.host)
+    if client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+        
+    background_tasks.add_task(fetch_city_and_log, tracking_id, client_ip)
     
     transparent_pixel = (
         b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff"

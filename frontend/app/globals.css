@@ -24,3 +24,50 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom Sleek Dark Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.4); /* zinc-950/40 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(63, 63, 70, 0.8); /* zinc-700/80 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(82, 82, 91, 1); /* zinc-600 */
+}
+
+/* ReactQuill Custom Dark Styling & Flex */
+.custom-quill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.custom-quill .ql-toolbar {
+  border: none !important;
+  border-bottom: 1px solid rgba(39, 39, 42, 1) !important; /* zinc-800 */
+  background: rgba(24, 24, 27, 0.6); /* zinc-950 */
+}
+.custom-quill .ql-toolbar .ql-stroke {
+  stroke: #a1a1aa !important; /* zinc-400 */
+}
+.custom-quill .ql-toolbar .ql-fill {
+  fill: #a1a1aa !important;
+}
+.custom-quill .ql-toolbar .ql-picker {
+  color: #a1a1aa !important;
+}
+.custom-quill .ql-container {
+  border: none !important;
+  flex: 1;
+  overflow-y: auto;
+}
+.custom-quill .ql-editor {
+  min-height: 100%;
+  font-family: inherit;
+}

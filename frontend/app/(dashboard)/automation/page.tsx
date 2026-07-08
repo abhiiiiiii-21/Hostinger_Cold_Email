@@ -26,6 +26,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("USA");
+  const [city, setCity] = useState("");
   const [emailTarget, setEmailTarget] = useState("email");
   const [file, setFile] = useState<File | null>(null);
   const [forceSend, setForceSend] = useState(false);
@@ -125,7 +126,8 @@ export default function Dashboard() {
 
     try {
       // Start the campaign
-      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}&email_column=${encodeURIComponent(emailTarget)}`, { method: "POST" });
+      const finalCity = city.trim() === "" ? "NA" : city.trim();
+      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&city=${encodeURIComponent(finalCity)}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}&email_column=${encodeURIComponent(emailTarget)}`, { method: "POST" });
       const startData = await startRes.json();
       
       if (startData.status === "error") {
@@ -259,17 +261,31 @@ export default function Dashboard() {
               <h2 className="text-base font-semibold text-zinc-100 mb-6 tracking-tight">Launch Campaign</h2>
               
               <div className="space-y-6">
-                {/* Country Selection */}
-                <div>
-                  <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target Country</label>
-                  <select 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner cursor-pointer"
-                    value={selectedCountry}
-                    onChange={(e) => setSelectedCountry(e.target.value)}
-                  >
-                    <option value="USA">United States</option>
-                    <option value="UK">United Kingdom</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Country Selection */}
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target Country</label>
+                    <select 
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner cursor-pointer"
+                      value={selectedCountry}
+                      onChange={(e) => setSelectedCountry(e.target.value)}
+                    >
+                      <option value="USA">United States</option>
+                      <option value="UK">United Kingdom</option>
+                    </select>
+                  </div>
+                  
+                  {/* City Selection */}
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Target City</label>
+                    <input 
+                      type="text"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition shadow-inner placeholder:text-zinc-600"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="e.g. New York (Optional)"
+                    />
+                  </div>
                 </div>
 
                 {/* Email Target Selection */}

@@ -78,6 +78,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <span className="font-medium text-sm">Dashboard</span>
             </Link>
             <Link 
+              href="/inbox"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/inbox" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
+            >
+              <Send size={18} strokeWidth={1.75} />
+              <span className="font-medium text-sm">Inbox</span>
+            </Link>
+            <Link 
               href="/automation"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/automation" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
             >

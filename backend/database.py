@@ -22,6 +22,7 @@ def init_db():
             failed INTEGER,
             skipped INTEGER,
             email_target TEXT DEFAULT 'email',
+            city TEXT DEFAULT 'NA',
             user_id TEXT
         )
     """)
@@ -37,6 +38,8 @@ def init_db():
             campaign_id INTEGER,
             website_review TEXT,
             recipient_name TEXT,
+            email_subject TEXT,
+            email_body TEXT,
             user_id TEXT
         )
     """)
@@ -93,18 +96,35 @@ def init_db():
             user_id TEXT
         )
     """)
+    
+    # Safely add columns if they don't exist
+    try:
+        cursor.execute("ALTER TABLE email_tracking ADD COLUMN email_subject TEXT;")
+    except psycopg2.Error:
+        conn.rollback()
+    
+    try:
+        cursor.execute("ALTER TABLE email_tracking ADD COLUMN email_body TEXT;")
+    except psycopg2.Error:
+        conn.rollback()
+
+    try:
+        cursor.execute("ALTER TABLE campaigns ADD COLUMN city TEXT DEFAULT 'NA';")
+    except psycopg2.Error:
+        conn.rollback()
+
     conn.commit()
     cursor.close()
     conn.close()
 
-def create_campaign_log(country: str, total_leads: int, user_id: str, email_target: str = "email") -> int:
+def create_campaign_log(country: str, city: str, total_leads: int, user_id: str, email_target: str = "email") -> int:
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO campaigns (timestamp, country, total_leads, sent, failed, skipped, email_target, user_id)
-        VALUES (%s, %s, %s, 0, 0, 0, %s, %s)
+        INSERT INTO campaigns (timestamp, country, city, total_leads, sent, failed, skipped, email_target, user_id)
+        VALUES (%s, %s, %s, %s, 0, 0, 0, %s, %s)
         RETURNING id
-    """, (datetime.datetime.now(), country, total_leads, email_target, user_id))
+    """, (datetime.datetime.now(), country, city, total_leads, email_target, user_id))
     campaign_id = cursor.fetchone()[0]
     conn.commit()
     cursor.close()
@@ -129,7 +149,7 @@ def get_recent_campaigns(user_id: str, limit=50):
     cursor.execute("""
         SELECT c.id, c.timestamp, c.country, c.total_leads, c.sent, c.failed, c.skipped,
                (SELECT COUNT(*) FROM email_tracking e WHERE e.campaign_id = c.id AND e.open_count > 0) AS opens,
-               c.email_target
+               c.email_target, c.city
         FROM campaigns c
         WHERE c.user_id = %s
         ORDER BY c.timestamp DESC 
@@ -144,36 +164,44 @@ def get_recent_campaigns(user_id: str, limit=50):
     for row in rows:
         campaigns.append({
             "id": row[0],
-            "timestamp": row[1].isoformat() if row[1] else None,
+            "timestamp": row[1].isoformat() + "Z" if row[1] else None,
             "country": row[2],
             "total_leads": row[3],
             "sent": row[4],
             "failed": row[5],
             "skipped": row[6],
             "opens": row[7],
-            "email_target": row[8]
+            "email_target": row[8],
+            "city": row[9]
         })
     return campaigns
 
-def log_email_sent(tracking_id: str, email: str, company: str, user_id: str, campaign_id: int = None, website_review: str = "", recipient_name: str = ""):
+def log_email_sent(tracking_id: str, email: str, company: str, user_id: str, campaign_id: int = None, website_review: str = "", recipient_name: str = "", email_subject: str = "", email_body: str = ""):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO email_tracking (tracking_id, email, company, sent_at, campaign_id, website_review, recipient_name, user_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    """, (tracking_id, email, company, datetime.datetime.now(), campaign_id, website_review, recipient_name, user_id))
+        INSERT INTO email_tracking (tracking_id, email, company, sent_at, campaign_id, website_review, recipient_name, user_id, email_subject, email_body)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (tracking_id, email, company, datetime.datetime.now(), campaign_id, website_review, recipient_name, user_id, email_subject, email_body))
     conn.commit()
     cursor.close()
     conn.close()
 
-def log_email_opened(tracking_id: str):
+def log_email_opened(tracking_id: str, city: str = None):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE email_tracking 
-        SET open_count = open_count + 1, opened_at = %s
-        WHERE tracking_id = %s
-    """, (datetime.datetime.now(), tracking_id))
+    if city:
+        cursor.execute("""
+            UPDATE email_tracking 
+            SET open_count = open_count + 1, opened_at = %s, city = %s
+            WHERE tracking_id = %s
+        """, (datetime.datetime.now(), city, tracking_id))
+    else:
+        cursor.execute("""
+            UPDATE email_tracking 
+            SET open_count = open_count + 1, opened_at = %s
+            WHERE tracking_id = %s
+        """, (datetime.datetime.now(), tracking_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -235,8 +263,8 @@ def get_tracking_stats(user_id: str):
             "tracking_id": row[0],
             "email": row[1],
             "company": row[2],
-            "sent_at": row[3].isoformat() if row[3] else None,
-            "opened_at": row[4].isoformat() if row[4] else None,
+            "sent_at": row[3].isoformat() + "Z" if row[3] else None,
+            "opened_at": row[4].isoformat() + "Z" if row[4] else None,
             "open_count": row[5]
         })
     return tracking_data
@@ -324,7 +352,7 @@ def get_campaign_tracking(campaign_id: int, user_id: str):
             clicks_by_tracking_id[tid] = []
         clicks_by_tracking_id[tid].append({
             "url": click_row[1],
-            "clicked_at": click_row[2].isoformat() if click_row[2] else None
+            "clicked_at": click_row[2].isoformat() + "Z" if click_row[2] else None
         })
     
     tracking_data = []
@@ -334,12 +362,66 @@ def get_campaign_tracking(campaign_id: int, user_id: str):
             "tracking_id": tid,
             "email": row[1],
             "company": row[2],
-            "sent_at": row[3].isoformat() if row[3] else None,
-            "opened_at": row[4].isoformat() if row[4] else None,
+            "sent_at": row[3].isoformat() + "Z" if row[3] else None,
+            "opened_at": row[4].isoformat() + "Z" if row[4] else None,
             "open_count": row[5],
             "website_review": row[6],
             "recipient_name": row[7],
             "click_count": row[8],
+            "clicks": clicks_by_tracking_id.get(tid, [])
+        })
+    return tracking_data
+
+def get_single_sends_tracking(user_id: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT e.tracking_id, e.email, e.company, e.sent_at, e.opened_at, e.open_count, e.website_review, e.recipient_name, e.email_subject, e.email_body,
+               (SELECT COUNT(*) FROM link_clicks lc WHERE lc.tracking_id = e.tracking_id) AS click_count, e.city
+        FROM email_tracking e
+        WHERE e.campaign_id IS NULL AND e.user_id = %s
+        ORDER BY e.sent_at DESC
+    """, (user_id,))
+    rows = cursor.fetchall()
+    
+    # Fetch all clicks for single sends
+    cursor.execute("""
+        SELECT lc.tracking_id, lc.url, lc.clicked_at
+        FROM link_clicks lc
+        JOIN email_tracking e ON lc.tracking_id = e.tracking_id
+        WHERE e.campaign_id IS NULL AND e.user_id = %s
+        ORDER BY lc.clicked_at DESC
+    """, (user_id,))
+    click_rows = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    # Group clicks by tracking_id
+    clicks_by_tracking_id = {}
+    for click_row in click_rows:
+        tid = click_row[0]
+        if tid not in clicks_by_tracking_id:
+            clicks_by_tracking_id[tid] = []
+        clicks_by_tracking_id[tid].append({
+            "url": click_row[1],
+            "clicked_at": click_row[2].isoformat() + "Z" if click_row[2] else None
+        })
+    
+    tracking_data = []
+    for row in rows:
+        tid = row[0]
+        tracking_data.append({
+            "tracking_id": tid,
+            "email": row[1],
+            "company": row[2],
+            "sent_at": row[3].isoformat() + "Z" if row[3] else None,
+            "opened_at": row[4].isoformat() + "Z" if row[4] else None,
+            "open_count": row[5],
+            "website_review": row[6],
+            "recipient_name": row[7],
+            "click_count": row[8],
+            "city": row[11],
             "clicks": clicks_by_tracking_id.get(tid, [])
         })
     return tracking_data

@@ -11,8 +11,11 @@ import imaplib
 import time
 import re
 import traceback
+from typing import List, Dict, Any
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from email.utils import formataddr
 import os
 from dotenv import load_dotenv
@@ -136,7 +139,7 @@ def _append_to_sent_folder(msg: MIMEMultipart) -> None:
         print("-----------------------------\n")
 
 
-def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = None) -> None:
+def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = None, attachments: List[Dict[str, Any]] = None, cc: str = "", bcc: str = "") -> None:
     """
     Sends an HTML email using Hostinger SMTP and saves it to the Sent mailbox.
 
@@ -145,6 +148,9 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
         subject: The subject line of the email.
         html_body: The formatted HTML body of the email.
         tracking_id: Optional tracking ID to embed a 1x1 tracking pixel.
+        attachments: Optional list of dicts with 'filename', 'content', and 'content_type' keys.
+        cc: Comma-separated list of CC email addresses.
+        bcc: Comma-separated list of BCC email addresses.
     """
     print(">>> send_email() ENTERED")
     if not all([SMTP_HOST, SMTP_EMAIL, SMTP_PASSWORD]):
@@ -187,10 +193,30 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
     msg["Subject"] = subject
     msg["From"] = formataddr(("Websual Agency", SMTP_EMAIL))
     msg["To"] = to_email
+    if cc:
+        msg["Cc"] = cc
+        
+    all_recipients = [to_email]
+    if cc:
+        all_recipients.extend([e.strip() for e in cc.split(",") if e.strip()])
+    if bcc:
+        all_recipients.extend([e.strip() for e in bcc.split(",") if e.strip()])
 
     # Attach the HTML body
     part = MIMEText(html_body, "html")
     msg.attach(part)
+    
+    # Process attachments
+    if attachments:
+        for attachment in attachments:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment['content'])
+            encoders.encode_base64(part)
+            part.add_header(
+                'Content-Disposition',
+                f'attachment; filename="{attachment["filename"]}"'
+            )
+            msg.attach(part)
 
     # Context for secure connection
     # Disabling strict verification as macOS Python often lacks root certificates by default
@@ -203,12 +229,12 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
     if SMTP_PORT == 465:
         with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
             server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+            server.sendmail(SMTP_EMAIL, all_recipients, msg.as_string())
     else:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.starttls(context=context)
             server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+            server.sendmail(SMTP_EMAIL, all_recipients, msg.as_string())
     
     print(">>> SMTP completed.")
             

@@ -147,7 +147,7 @@ export default function HistoryPage() {
             <tr>
               <th className="px-6 py-4">ID</th>
               <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Country</th>
+              <th className="px-6 py-4">Target</th>
               <th className="px-6 py-4">Total</th>
               <th className="px-6 py-4 text-emerald-500">Sent</th>
               <th className="px-6 py-4 text-blue-400">Opens</th>
@@ -168,10 +168,17 @@ export default function HistoryPage() {
                     {new Date(run.timestamp).toLocaleDateString()} <span className="text-zinc-600">at</span> {new Date(run.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </td>
                   <td className="px-6 py-4 font-medium text-zinc-200">
-                    {run.country}
-                    <span className="text-[10px] text-zinc-500 ml-2 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 uppercase tracking-wider">
-                      {run.email_target === 'email' ? 'Primary' : 'Secondary'}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        {run.country}
+                        <span className="text-[10px] text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800 uppercase tracking-wider">
+                          {run.email_target === 'email' ? 'Primary' : 'Secondary'}
+                        </span>
+                      </div>
+                      {run.city && run.city !== "NA" && (
+                        <span className="text-[11px] text-zinc-400 font-medium">📍 {run.city}</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 font-mono text-zinc-500">{run.total_leads}</td>
                   <td className="px-6 py-4 font-mono text-emerald-400">{run.sent}</td>
