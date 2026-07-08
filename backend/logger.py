@@ -12,13 +12,13 @@ def get_db():
 def init_logs() -> None:
     pass # Managed by database.py init_db()
 
-def get_sent_emails() -> set:
+def get_sent_emails(user_id: str) -> set:
     """
     Reads the success_logs table and returns a set of already sent emails.
     """
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT email FROM success_logs")
+    cursor.execute("SELECT email FROM success_logs WHERE user_id = %s", (user_id,))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -29,24 +29,24 @@ def get_sent_emails() -> set:
             sent.add(row[0].strip().lower())
     return sent
 
-def log_success(company: str, email: str, subject: str) -> None:
+def log_success(user_id: str, company: str, email: str, subject: str) -> None:
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO success_logs (company, email, subject, timestamp, status)
-        VALUES (%s, %s, %s, %s, 'SUCCESS')
-    """, (company, email, subject, datetime.now()))
+        INSERT INTO success_logs (user_id, company, email, subject, timestamp, status)
+        VALUES (%s, %s, %s, %s, %s, 'SUCCESS')
+    """, (user_id, company, email, subject, datetime.now()))
     conn.commit()
     cursor.close()
     conn.close()
 
-def log_failure(company: str, email: str, subject: str, error: str) -> None:
+def log_failure(user_id: str, company: str, email: str, subject: str, error: str) -> None:
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO failed_logs (company, email, subject, timestamp, status, error)
-        VALUES (%s, %s, %s, %s, 'FAILED', %s)
-    """, (company, email, subject, datetime.now(), str(error)))
+        INSERT INTO failed_logs (user_id, company, email, subject, timestamp, status, error)
+        VALUES (%s, %s, %s, %s, %s, 'FAILED', %s)
+    """, (user_id, company, email, subject, datetime.now(), str(error)))
     conn.commit()
     cursor.close()
     conn.close()

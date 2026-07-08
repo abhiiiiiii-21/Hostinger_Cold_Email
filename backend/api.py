@@ -135,7 +135,7 @@ def run_campaign_thread(user_id: str, country: str, force_send: bool = False, ba
         add_log(state, "INFO", f"[{len(leads)} leads loaded]")
         
         logger.init_logs()
-        sent_emails = logger.get_sent_emails()
+        sent_emails = logger.get_sent_emails(user_id)
         
         campaign_id = database.create_campaign_log(country, len(leads), user_id, email_target=email_column)
         
@@ -224,11 +224,24 @@ def run_campaign_thread(user_id: str, country: str, force_send: bool = False, ba
                     tracking_id=tracking_id
                 )
                 
-                logger.log_success(company, email, parsed_email.subject)
+                logger.log_success(user_id, company, email, parsed_email.subject)
                 sent_emails.add(email.lower())
                 
                 add_log(state, "SUCCESS", f"Delivered successfully to {email}")
                 state.sent_list.append({"company": company, "email": email})
+                
+                # Update campaign stats progressively
+                if index % 5 == 0 or index == len(leads):
+                    try:
+                        database.update_campaign_log(
+                            campaign_id,
+                            len(state.sent_list),
+                            len(state.failed_list),
+                            len(state.skipped_list),
+                            user_id
+                        )
+                    except Exception as e:
+                        print(f"Failed to update campaign log progressively: {e}")
                 
                 # Sleep delay logic (cooldown vs standard)
                 if batch_size > 0 and cooldown_minutes > 0 and len(state.sent_list) % batch_size == 0 and len(state.sent_list) > 0:
@@ -275,7 +288,7 @@ def run_campaign_thread(user_id: str, country: str, force_send: bool = False, ba
                 error_msg = f"SMTP Response: {code} {msg}"
                 add_log(state, "ERROR", f"{bounce_type.upper()} BOUNCE: {error_msg}")
                 state.failed_list.append({"company": company, "email": email, "error": error_msg})
-                logger.log_failure(company, email, "Unknown", error_msg)
+                logger.log_failure(user_id, company, email, "Unknown", error_msg)
             except smtplib.SMTPRecipientsRefused as e:
                 for ref_email, (code, msg) in e.recipients.items():
                     msg_str = msg.decode(errors='ignore') if isinstance(msg, bytes) else str(msg)
@@ -283,12 +296,12 @@ def run_campaign_thread(user_id: str, country: str, force_send: bool = False, ba
                 error_msg = f"Recipients Refused: {str(e.recipients)}"
                 add_log(state, "ERROR", f"HARD BOUNCE: {error_msg}")
                 state.failed_list.append({"company": company, "email": email, "error": error_msg})
-                logger.log_failure(company, email, "Unknown", error_msg)
+                logger.log_failure(user_id, company, email, "Unknown", error_msg)
             except Exception as e:
                 error_msg = str(e)
                 add_log(state, "ERROR", f"SMTP Failure: {error_msg}")
                 state.failed_list.append({"company": company, "email": email, "error": error_msg})
-                logger.log_failure(company, email, "Unknown", error_msg)
+                logger.log_failure(user_id, company, email, "Unknown", error_msg)
 
             lead_time = time.time() - start_time
             state.total_time_accumulated += lead_time
