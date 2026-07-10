@@ -3,14 +3,18 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Send, LayoutDashboard, History, Zap, ShieldBan } from "lucide-react";
+import { Send, LayoutDashboard, History, Zap, ShieldBan, Pencil } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import ComposePopup from "./ComposePopup";
+import { Toaster } from "./ui/sonner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [backendStatus, setBackendStatus] = useState<"offline" | "online" | "error">("offline");
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [isComposeMinimized, setIsComposeMinimized] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -70,6 +74,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         {/* SIDEBAR NAVIGATION */}
         <aside className="w-[240px] border-r border-zinc-800/60 bg-zinc-950/20 overflow-y-auto hidden lg:flex flex-col shrink-0 custom-scrollbar">
           <div className="p-4 flex flex-col gap-2 mt-4">
+            <div className="mb-3 px-1">
+              <button 
+                onClick={() => {
+                  setIsComposeOpen(true);
+                  setIsComposeMinimized(false);
+                }}
+                className="flex items-center gap-3 px-6 py-3.5 bg-white hover:bg-zinc-100 text-zinc-700 rounded-full font-semibold text-sm shadow-md hover:shadow-lg transition active:scale-[0.98] cursor-pointer w-fit select-none"
+              >
+                <Pencil size={18} className="text-zinc-500" strokeWidth={2.5} />
+                <span>Compose</span>
+              </button>
+            </div>
+
             <Link 
               href="/"
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
@@ -78,11 +95,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <span className="font-medium text-sm">Dashboard</span>
             </Link>
             <Link 
-              href="/inbox"
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/inbox" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
+              href="/sent"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${pathname === "/sent" ? "bg-zinc-900 text-zinc-100 shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/40"}`}
             >
               <Send size={18} strokeWidth={1.75} />
-              <span className="font-medium text-sm">Inbox</span>
+              <span className="font-medium text-sm">Sent</span>
             </Link>
             <Link 
               href="/automation"
@@ -115,6 +132,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </div>
         </main>
       </div>
+
+      {isComposeOpen && (
+        <ComposePopup 
+          onClose={() => setIsComposeOpen(false)} 
+          isMinimized={isComposeMinimized} 
+          setIsMinimized={setIsComposeMinimized} 
+        />
+      )}
+      <Toaster position="top-center" richColors />
     </div>
   );
 }

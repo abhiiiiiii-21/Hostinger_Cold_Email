@@ -96,6 +96,21 @@ def init_db():
             user_id TEXT
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scheduled_emails (
+            id SERIAL PRIMARY KEY,
+            user_id TEXT,
+            email TEXT,
+            company TEXT,
+            recipient_name TEXT,
+            subject TEXT,
+            body TEXT,
+            attachments JSON,
+            scheduled_at TIMESTAMP,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     
     # Safely add columns if they don't exist
     try:
@@ -558,3 +573,49 @@ def get_daily_trend_stats(user_id: str, days: int = 30):
         }
         for row in rows
     ]
+
+def insert_scheduled_email(user_id: str, email: str, company: str, recipient_name: str, subject: str, body: str, scheduled_at: datetime.datetime, attachments: list = None):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        import json
+        attachments_json = json.dumps(attachments) if attachments else "[]"
+        cursor.execute("""
+            INSERT INTO scheduled_emails (user_id, email, company, recipient_name, subject, body, scheduled_at, attachments)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (user_id, email, company, recipient_name, subject, body, scheduled_at, attachments_json))
+        new_id = cursor.fetchone()[0]
+        conn.commit()
+        return new_id
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_due_scheduled_emails():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, user_id, email, company, recipient_name, subject, body, attachments, scheduled_at 
+            FROM scheduled_emails 
+            WHERE status = 'pending' AND scheduled_at <= CURRENT_TIMESTAMP
+        """)
+        columns = [desc[0] for desc in cursor.description]
+        results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        return results
+    finally:
+        cursor.close()
+        conn.close()
+
+def mark_scheduled_email_sent(email_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE scheduled_emails SET status = 'sent' WHERE id = %s
+        """, (email_id,))
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()

@@ -56,6 +56,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+import base64
+import dateutil.parser
+import json
+
+async def email_scheduler_loop():
+    while True:
+        try:
+            due_emails = database.get_due_scheduled_emails()
+            for email_data in due_emails:
+                try:
+                    attachments = []
+                    if email_data.get('attachments'):
+                        atts = json.loads(email_data['attachments']) if isinstance(email_data['attachments'], str) else email_data['attachments']
+                        for att in atts:
+                            content = base64.b64decode(att['content'])
+                            attachments.append({
+                                'filename': att['filename'],
+                                'content': content,
+                                'content_type': att['content_type']
+                            })
+                            
+                    tracking_id = str(uuid.uuid4())
+                    database.log_email_sent(
+                        tracking_id, email_data['email'], email_data['company'], email_data['user_id'], 
+                        campaign_id=None, website_review="", recipient_name=email_data['recipient_name'],
+                        email_subject=email_data['subject'], email_body=email_data['body']
+                    )
+                    send_email(
+                        to_email=email_data['email'],
+                        subject=email_data['subject'],
+                        html_body=email_data['body'],
+                        tracking_id=tracking_id,
+                        attachments=attachments,
+                        cc="",
+                        bcc=""
+                    )
+                    logger.log_success(email_data['user_id'], email_data['company'], email_data['email'], email_data['subject'])
+                    database.mark_scheduled_email_sent(email_data['id'])
+                except Exception as e:
+                    print(f"Error sending scheduled email {email_data['id']}: {e}")
+        except Exception as e:
+            print(f"Scheduler loop error: {e}")
+        
+        await asyncio.sleep(60)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(email_scheduler_loop())
+
 class AppState:
     def __init__(self):
         self.is_running = False
@@ -482,6 +532,43 @@ def single_send_email(
     except Exception as e:
         logger.log_failure(user_id, company, email, "Single Send", str(e))
         return {"status": "error", "message": str(e)}
+
+@app.post("/api/single-send/schedule")
+def schedule_single_email(
+    email: str = Form(...),
+    cc: str = Form(""),
+    bcc: str = Form(""),
+    name: str = Form(""),
+    company: str = Form(""),
+    subject: str = Form(...),
+    body: str = Form(...),
+    scheduled_at: str = Form(...),
+    attachments: List[UploadFile] = File(default=[]),
+    user_id: str = Depends(get_user_id)
+):
+    try:
+        dt = dateutil.parser.isoparse(scheduled_at)
+    except:
+        return JSONResponse(status_code=400, content={"error": "Invalid scheduled_at format"})
+
+    # Apply the same URL linking and paragraph fixing
+    parts = re.split(r'(<[^>]+>)', body)
+    for i in range(0, len(parts), 2):
+        parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', r'<a href="\1">\1</a>', parts[i])
+    body = ''.join(parts)
+    body = body.replace("<p>", '<div style="margin: 0; padding: 0;">').replace("</p>", "</div>")
+    
+    attached_files = []
+    for f in attachments:
+        if f.filename:
+            content = f.file.read()
+            encoded = base64.b64encode(content).decode('utf-8')
+            attached_files.append({"filename": f.filename, "content": encoded, "content_type": f.content_type})
+            
+    database.insert_scheduled_email(
+        user_id, email, company, name, subject, body, dt, attached_files
+    )
+    return {"status": "success", "message": "Email scheduled successfully"}
 
 @app.get("/api/single-sends/tracking")
 def get_single_sends(user_id: str = Depends(get_user_id)):
