@@ -166,6 +166,11 @@ def send_email(to_email: str, subject: str, html_body: str, tracking_id: str = N
             original_url = match.group(2)
             suffix = match.group(3)
             
+            # Sanitize URL: Rich text editors often inject spaces, newlines, or non-breaking spaces 
+            # inside href attributes during word wrap or copy/paste. Strip all whitespace.
+            original_url = original_url.replace('&nbsp;', '')
+            original_url = re.sub(r'[\s\xa0\n\r\t]+', '', original_url)
+            
             if original_url.lower().startswith(('mailto:', 'tel:', '#')) or '/api/click/' in original_url:
                 return match.group(0)
                 
