@@ -1,8 +1,8 @@
-Subject: Following up on [Company]'s website examples
+Subject: Following up on {company_name}'s website examples
 
-Hi [First Name],
+Hi {first_name},
 
-Wanted to follow up on the examples I sent over for [Company]. I know things get busy, so no worries if it slipped down the inbox.
+Wanted to follow up on the examples I sent over for {company_name}. I know things get busy, so no worries if it slipped down the inbox.
 
 If you've had a chance to look through them, I'd love to hear your thoughts and if there's anything you'd want adjusted (layout, colors, sections, anything at all), happy to refine it to better fit what you have in mind.
 

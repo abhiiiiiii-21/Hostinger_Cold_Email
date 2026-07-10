@@ -251,20 +251,41 @@ def run_campaign_thread(user_id: str, country: str, city: str = "NA", force_send
                 state.average_send_time = int(state.total_time_accumulated / state.leads_processed_this_run)
                 continue
                 
-            review = lead.get("website review", "")
-            issues = classify(review)
-            template_name = choose_template(issues)
-            
-            if template_name is None:
-                skip_reason = "Good UI" if "good_ui" in issues else "No matching template (Unclassified)"
-                add_log(state, "SKIP", f"Reason: {skip_reason}")
-                state.skipped_list.append({"company": company, "email": email, "reason": skip_reason})
+            if country == "FollowUP":
+                follow_up_val = ""
+                for k, v in lead.items():
+                    if k.lower() in ["follow up", "follow ups"]:
+                        follow_up_val = str(v).strip().title()
+                        break
                 
-                lead_time = time.time() - start_time
-                state.total_time_accumulated += lead_time
-                state.leads_processed_this_run += 1
-                state.average_send_time = int(state.total_time_accumulated / state.leads_processed_this_run)
-                continue
+                if not follow_up_val:
+                    skip_reason = "No Follow Up value specified in CSV"
+                    add_log(state, "SKIP", f"Reason: {skip_reason}")
+                    state.skipped_list.append({"company": company, "email": email, "reason": skip_reason})
+                    
+                    lead_time = time.time() - start_time
+                    state.total_time_accumulated += lead_time
+                    state.leads_processed_this_run += 1
+                    state.average_send_time = int(state.total_time_accumulated / state.leads_processed_this_run)
+                    continue
+                
+                template_name = f"{follow_up_val}.txt"
+                review = "Follow Up Campaign"
+            else:
+                review = lead.get("website review", "")
+                issues = classify(review)
+                template_name = choose_template(issues)
+                
+                if template_name is None:
+                    skip_reason = "Good UI" if "good_ui" in issues else "No matching template (Unclassified)"
+                    add_log(state, "SKIP", f"Reason: {skip_reason}")
+                    state.skipped_list.append({"company": company, "email": email, "reason": skip_reason})
+                    
+                    lead_time = time.time() - start_time
+                    state.total_time_accumulated += lead_time
+                    state.leads_processed_this_run += 1
+                    state.average_send_time = int(state.total_time_accumulated / state.leads_processed_this_run)
+                    continue
                 
             add_log(state, "INFO", f"Template auto-assigned: {template_name}")
             
@@ -505,11 +526,18 @@ def safe_auto_link_urls(html_body: str) -> str:
     return ''.join(parts)
 
 def fix_paragraph_spacing(html_body: str) -> str:
-    """Convert Quill's <p> tags to styled paragraphs with controlled spacing."""
-    # Give each <p> a small bottom margin so single-Enter creates a subtle gap,
-    # and empty <p><br></p> (user pressing Enter twice) creates a visible blank line.
-    html_body = html_body.replace('<p>', '<p style="margin: 0 0 4px 0; padding: 0;">').replace('<p class=', '<p style="margin: 0 0 4px 0; padding: 0;" class=')
-    return html_body
+    """
+    Replaces ReactQuill's <p> tags with Gmail-style <div> tags to ensure
+    exact 1-to-1 spacing with no unwanted gaps between lines.
+    """
+    html_body = html_body.replace('<p>', '<div dir="auto">').replace('<p class=', '<div dir="auto" class=')
+    html_body = html_body.replace('</p>', '</div>')
+    
+    # Wrap everything in Gmail's standard font/color container
+    gmail_wrapper = f"""<div dir="ltr" style="font-family: Arial, Helvetica, sans-serif; font-size: small; color: #222222;">
+{html_body}
+</div>"""
+    return gmail_wrapper
 
 @app.post("/api/single-send")
 def single_send_email(

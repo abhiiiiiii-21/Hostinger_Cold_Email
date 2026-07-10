@@ -272,6 +272,7 @@ export default function Dashboard() {
                     >
                       <option value="USA">United States</option>
                       <option value="UK">United Kingdom</option>
+                      <option value="FollowUP">Follow Up</option>
                     </select>
                   </div>
                   
