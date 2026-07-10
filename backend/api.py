@@ -527,17 +527,24 @@ def safe_auto_link_urls(html_body: str) -> str:
 
 def fix_paragraph_spacing(html_body: str) -> str:
     """
-    Replaces ReactQuill's <p> tags with Gmail-style <div> tags to ensure
-    exact 1-to-1 spacing with no unwanted gaps between lines.
+    Converts ReactQuill's paragraph-based HTML to simple <br> based HTML.
+    This guarantees 1-to-1 parity with what the user typed, without unwanted
+    margins or inline colors that break the dark-mode dashboard.
     """
-    html_body = html_body.replace('<p>', '<div dir="auto">').replace('<p class=', '<div dir="auto" class=')
-    html_body = html_body.replace('</p>', '</div>')
+    # 1. Empty lines in Quill are <p><br></p>, turn them into a single <br>
+    html_body = html_body.replace('<p><br></p>', '<br>')
     
-    # Wrap everything in Gmail's standard font/color container
-    gmail_wrapper = f"""<div dir="ltr" style="font-family: Arial, Helvetica, sans-serif; font-size: small; color: #222222;">
-{html_body}
-</div>"""
-    return gmail_wrapper
+    # 2. Strip opening <p> tags
+    html_body = re.sub(r'<p[^>]*>', '', html_body)
+    
+    # 3. Replace closing </p> with <br>
+    html_body = html_body.replace('</p>', '<br>')
+    
+    # 4. Clean up the final trailing <br> to prevent an extra blank line at the end
+    if html_body.endswith('<br>'):
+        html_body = html_body[:-4]
+        
+    return html_body
 
 @app.post("/api/single-send")
 def single_send_email(
