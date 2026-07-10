@@ -480,6 +480,37 @@ def get_history(user_id: str = Depends(get_user_id)):
 def get_campaign_tracking_endpoint(campaign_id: int, user_id: str = Depends(get_user_id)):
     return database.get_campaign_tracking(campaign_id, user_id)
 
+def safe_auto_link_urls(html_body: str) -> str:
+    """Auto-link raw URLs in text nodes, but skip text that is already inside <a> tags."""
+    parts = re.split(r'(<[^>]+>)', html_body)
+    inside_a = 0
+    for i in range(len(parts)):
+        part = parts[i]
+        # Check if this is a tag
+        if part.startswith('<'):
+            lower = part.lower()
+            if lower.startswith('<a ') or lower.startswith('<a>'):
+                inside_a += 1
+            elif lower.startswith('</a'):
+                inside_a = max(0, inside_a - 1)
+        else:
+            # Text node: only auto-link if NOT inside an <a> tag
+            if inside_a == 0:
+                def clean_url_match(m):
+                    url = m.group(1)
+                    # Strip &nbsp; that Quill may inject inside URLs
+                    url = url.replace('&nbsp;', '').replace('\xa0', '')
+                    return f'<a href="{url}">{url}</a>'
+                parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', clean_url_match, part)
+    return ''.join(parts)
+
+def fix_paragraph_spacing(html_body: str) -> str:
+    """Convert Quill's <p> tags to styled paragraphs with controlled spacing."""
+    # Give each <p> a small bottom margin so single-Enter creates a subtle gap,
+    # and empty <p><br></p> (user pressing Enter twice) creates a visible blank line.
+    html_body = html_body.replace('<p>', '<p style="margin: 0 0 4px 0; padding: 0;">').replace('<p class=', '<p style="margin: 0 0 4px 0; padding: 0;" class=')
+    return html_body
+
 @app.post("/api/single-send")
 def single_send_email(
     email: str = Form(...),
@@ -494,16 +525,11 @@ def single_send_email(
 ):
     tracking_id = str(uuid.uuid4())
     
-    # Auto-link raw URLs that are not already inside tags (naive approach for text nodes)
-    # Split by tags, then replace URLs in text nodes
-    parts = re.split(r'(<[^>]+>)', body)
-    for i in range(0, len(parts), 2):
-        parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', r'<a href="\1">\1</a>', parts[i])
-    body = ''.join(parts)
+    # Auto-link raw URLs (safely skipping text already inside <a> tags)
+    body = safe_auto_link_urls(body)
     
-    # Fix ReactQuill's massive default paragraph margins in email clients
-    # Converts <p> into gapless <div>, so user's manual "Enters" dictate exact spacing
-    body = body.replace("<p>", '<div style="margin: 0; padding: 0;">').replace("</p>", "</div>")
+    # Fix paragraph spacing for email clients
+    body = fix_paragraph_spacing(body)
     
     database.log_email_sent(
         tracking_id, email, company, user_id, 
@@ -552,11 +578,8 @@ def schedule_single_email(
         return JSONResponse(status_code=400, content={"error": "Invalid scheduled_at format"})
 
     # Apply the same URL linking and paragraph fixing
-    parts = re.split(r'(<[^>]+>)', body)
-    for i in range(0, len(parts), 2):
-        parts[i] = re.sub(r'(?i)\b(https?://[^\s<]+)', r'<a href="\1">\1</a>', parts[i])
-    body = ''.join(parts)
-    body = body.replace("<p>", '<div style="margin: 0; padding: 0;">').replace("</p>", "</div>")
+    body = safe_auto_link_urls(body)
+    body = fix_paragraph_spacing(body)
     
     attached_files = []
     for f in attachments:

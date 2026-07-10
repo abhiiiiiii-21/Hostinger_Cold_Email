@@ -51,6 +51,7 @@ export default function ComposePopup({ onClose, isMinimized, setIsMinimized }: C
 
   // Custom Schedule State
   const [isCustomScheduleOpen, setIsCustomScheduleOpen] = useState(false);
+  const [customScheduleDate, setCustomScheduleDate] = useState("");
   const [customScheduleTime, setCustomScheduleTime] = useState("");
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -101,10 +102,11 @@ export default function ComposePopup({ onClose, isMinimized, setIsMinimized }: C
     });
 
     try {
+      const token = await getToken();
       const response = await fetch(`${API_BASE}/single-send/schedule`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -144,29 +146,35 @@ export default function ComposePopup({ onClose, isMinimized, setIsMinimized }: C
     }
 
     if (timeType === "Custom time and date") {
+      // Pre-fill date with today and time with next rounded hour
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      setCustomScheduleDate(`${year}-${month}-${day}`);
+      
+      const nextHour = now.getHours() + 1;
+      setCustomScheduleTime(`${String(nextHour % 24).padStart(2, '0')}:00`);
+      
       setIsCustomScheduleOpen(true);
       return;
     }
-
-    let scheduleDate = new Date();
-    if (timeType.includes("Tomorrow")) {
-      scheduleDate.setDate(scheduleDate.getDate() + 1);
-      scheduleDate.setHours(9, 0, 0, 0);
-    } else if (timeType.includes("Monday")) {
-      const daysUntilMonday = (1 + 7 - scheduleDate.getDay()) % 7 || 7;
-      scheduleDate.setDate(scheduleDate.getDate() + daysUntilMonday);
-      scheduleDate.setHours(9, 0, 0, 0);
-    }
-    
-    postScheduledEmail(scheduleDate.toISOString());
   };
 
   const handleConfirmCustomSchedule = () => {
-    if (!customScheduleTime) {
-      toast.error("Please select a valid date and time.");
+    if (!customScheduleDate || !customScheduleTime) {
+      toast.error("Please select both a date and time.");
       return;
     }
-    const scheduleDate = new Date(customScheduleTime);
+    const scheduleDate = new Date(`${customScheduleDate}T${customScheduleTime}:00`);
+    if (isNaN(scheduleDate.getTime())) {
+      toast.error("Invalid date or time selected.");
+      return;
+    }
+    if (scheduleDate <= new Date()) {
+      toast.error("Scheduled time must be in the future.");
+      return;
+    }
     setIsCustomScheduleOpen(false);
     postScheduledEmail(scheduleDate.toISOString());
   };
@@ -530,12 +538,6 @@ export default function ComposePopup({ onClose, isMinimized, setIsMinimized }: C
                       <DropdownMenuLabel className="font-bold text-[15px] pb-3 pt-2 px-3 text-gray-900">
                         Schedule message
                       </DropdownMenuLabel>
-                      <DropdownMenuItem className="py-2.5 px-3 text-[14px] text-gray-700 cursor-pointer focus:bg-gray-100 focus:text-gray-900 rounded-xl outline-none" onClick={() => handleSchedule("Tomorrow at 9:00 AM")}>
-                        Tomorrow at 9:00 AM
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="py-2.5 px-3 text-[14px] text-gray-700 cursor-pointer focus:bg-gray-100 focus:text-gray-900 rounded-xl outline-none" onClick={() => handleSchedule("Monday at 9:00 AM")}>
-                        Monday at 9:00 AM
-                      </DropdownMenuItem>
                       <DropdownMenuItem className="py-2.5 px-3 text-[14px] text-gray-700 cursor-pointer focus:bg-gray-100 focus:text-gray-900 rounded-xl outline-none" onClick={() => handleSchedule("Custom time and date")}>
                         Custom time and date
                       </DropdownMenuItem>
@@ -651,16 +653,28 @@ export default function ComposePopup({ onClose, isMinimized, setIsMinimized }: C
       <Dialog open={isCustomScheduleOpen} onOpenChange={setIsCustomScheduleOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Custom Schedule</DialogTitle>
+            <DialogTitle>Schedule Email</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="schedule-time" className="text-gray-700">Select Date and Time</Label>
+              <Label htmlFor="schedule-date" className="text-sm font-medium text-gray-700">Date</Label>
+              <Input
+                id="schedule-date"
+                type="date"
+                value={customScheduleDate}
+                onChange={(e) => setCustomScheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="h-11"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="schedule-time" className="text-sm font-medium text-gray-700">Time</Label>
               <Input
                 id="schedule-time"
-                type="datetime-local"
+                type="time"
                 value={customScheduleTime}
                 onChange={(e) => setCustomScheduleTime(e.target.value)}
+                className="h-11"
               />
             </div>
           </div>
