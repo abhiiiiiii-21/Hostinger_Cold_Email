@@ -111,6 +111,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    conn.commit()
     
     # Safely add columns if they don't exist
     try:
