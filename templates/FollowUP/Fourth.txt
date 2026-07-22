@@ -1,0 +1,11 @@
+Subject: {first_name} - one quick question
+
+{first_name},
+
+Should we move forward with a quick look at your website, or does it make more sense to revisit this later?
+
+Either answer works - just want to make sure we're not cluttering your inbox.
+
+Best regards,
+Websual
+https://www.websual.agency

@@ -155,7 +155,7 @@ def calculate_stats(user_id: str):
     """Reads from database to calculate Today, Yesterday, and Monthly stats."""
     return database.get_dashboard_stats(user_id)
 
-def run_campaign_thread(user_id: str, country: str, city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email"):
+def run_campaign_thread(user_id: str, country: str, city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email", follow_up_version: str = ""):
     state = get_state_for_user(user_id)
     try:
         state.is_running = True
@@ -261,13 +261,7 @@ def run_campaign_thread(user_id: str, country: str, city: str = "NA", force_send
                 if not follow_up_val:
                     skip_reason = "No Follow Up value specified in CSV"
                     add_log(state, "SKIP", f"Reason: {skip_reason}")
-                    state.skipped_list.append({"company": company, "email": email, "reason": skip_reason})
-                    
-                    lead_time = time.time() - start_time
-                    state.total_time_accumulated += lead_time
-                    state.leads_processed_this_run += 1
-                    state.average_send_time = int(state.total_time_accumulated / state.leads_processed_this_run)
-                    continue
+                follow_up_val = follow_up_version.strip().title() if follow_up_version else "First"
                 
                 template_name = f"{follow_up_val}.txt"
                 review = "Follow Up Campaign"
@@ -483,12 +477,12 @@ async def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_u
     }
 
 @app.post("/api/start")
-def start_campaign(country: str = "Unknown", city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email", user_id: str = Depends(get_user_id)):
+def start_campaign(country: str = "Unknown", city: str = "NA", force_send: bool = False, batch_size: int = 0, cooldown_minutes: int = 0, email_column: str = "email", follow_up_version: str = "", user_id: str = Depends(get_user_id)):
     state = get_state_for_user(user_id)
     if state.is_running:
         return {"status": "error", "message": "Campaign is already running."}
     
-    thread = threading.Thread(target=run_campaign_thread, args=(user_id, country, city, force_send, batch_size, cooldown_minutes, email_column))
+    thread = threading.Thread(target=run_campaign_thread, args=(user_id, country, city, force_send, batch_size, cooldown_minutes, email_column, follow_up_version))
     thread.daemon = True
     thread.start()
     return {"status": "success", "message": "Campaign started"}

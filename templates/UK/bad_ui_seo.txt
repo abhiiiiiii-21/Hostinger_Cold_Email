@@ -1,13 +1,15 @@
-Subject: {company_name}: design + Google, both fixable
+Subject: We won't waste your time
 
-Hi {first_name},
+Hey {first_name},
 
-Checking out realtors in {city}, and {company_name}'s site had two things that stood out: the design feels outdated, and it's likely missing out on local Google traffic.
+You probably get a lot of messages, so this will only take 30s.
 
-Here's a quick example showing both fixed: https://real-estate-websual.vercel.app
+We noticed your website's design isn't doing your business justice, and it's also missing key SEO basics - both are likely costing you leads. We can fix that.
 
-And here's a similar project we recently delivered for another client: https://websual-christopher.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-No pressure, just thought it might be worth 5 minutes if you're open to it.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency

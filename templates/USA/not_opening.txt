@@ -1,15 +1,15 @@
-Subject: {company_name}'s website wasn't loading
+Subject: {company_name}'s website isn't loading
 
-Hi {first_name},
+Hey {first_name},
 
-I was checking out realtors in {city} and tried to pull up {company_name}'s website, but it wouldn't load for me.
+You probably get a lot of messages, so this will only take 30s.
 
-Might just be on my end, but if other potential buyers are hitting the same issue, it could be costing you leads without you knowing.
+We tried checking out your website and it wasn't loading - which means potential clients searching for you right now are hitting a dead end. We can fix that.
 
-I put together a quick example of what a fast, modern site could look like for a company like yours: https://real-estate-websual.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-Here's a similar project we recently completed for another client, if you want a real reference point: https://websual-christopher.vercel.app
-
-Happy to take a quick look at what's going on with your site too, no charge, if useful.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency

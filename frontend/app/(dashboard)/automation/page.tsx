@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [selectedCountry, setSelectedCountry] = useState("USA");
   const [city, setCity] = useState("");
   const [emailTarget, setEmailTarget] = useState("email");
+  const [followUpVersion, setFollowUpVersion] = useState("First");
   const [file, setFile] = useState<File | null>(null);
   const [forceSend, setForceSend] = useState(false);
   const [batchSize, setBatchSize] = useState<number>(60);
@@ -127,7 +128,7 @@ export default function Dashboard() {
     try {
       // Start the campaign
       const finalCity = city.trim() === "" ? "NA" : city.trim();
-      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&city=${encodeURIComponent(finalCity)}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}&email_column=${encodeURIComponent(emailTarget)}`, { method: "POST" });
+      const startRes = await fetch(`${API_BASE}/start?country=${selectedCountry}&city=${encodeURIComponent(finalCity)}&force_send=${forceSend}&batch_size=${batchSize}&cooldown_minutes=${cooldownMinutes}&email_column=${encodeURIComponent(emailTarget)}&follow_up_version=${followUpVersion}`, { method: "POST" });
       const startData = await startRes.json();
       
       if (startData.status === "error") {
@@ -288,6 +289,24 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
+
+                {/* Follow-up Selection (Only visible if FollowUP is selected) */}
+                {selectedCountry === "FollowUP" && (
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Which Follow Up?</label>
+                    <select 
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3.5 text-zinc-200 text-sm focus:outline-none focus:ring-1 focus:ring-zinc-600 focus:border-zinc-600 transition appearance-none shadow-inner cursor-pointer"
+                      value={followUpVersion}
+                      onChange={(e) => setFollowUpVersion(e.target.value)}
+                    >
+                      <option value="First">First</option>
+                      <option value="Second">Second</option>
+                      <option value="Third">Third</option>
+                      <option value="Fourth">Fourth</option>
+                      <option value="Fifth">Fifth</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* Email Target Selection */}
                 <div>

@@ -1,13 +1,15 @@
-Subject: A thought on {company_name}'s website
+Subject: We won't waste your time
 
-Hi {first_name},
+Hey {first_name},
 
-I came across {company_name} while looking into realtors in {city}. Solid site overall, but I think a few tweaks to layout and flow could help turn more visitors into actual inquiries.
+You probably get a lot of messages, so this will only take 30s.
 
-Here's an example of the kind of cleaner, more conversion-focused design I mean: https://real-estate-websual.vercel.app
+We noticed your website could use a design refresh because it's likely costing you leads. We can fix that.
 
-And here's a similar redesign we recently completed for another realtor: https://websual-christopher.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-If it's not for you, no worries at all, just wanted to flag it in case it's useful.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency

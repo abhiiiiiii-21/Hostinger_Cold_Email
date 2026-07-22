@@ -1,13 +1,15 @@
-Subject: {company_name}'s site: two quick opportunities
+Subject: We won't waste your time
 
-Hi {first_name},
+Hey {first_name},
 
-Looking into realtors around {city}, and {company_name}'s site stood out as having good bones, but I noticed a couple of gaps: layout/flow, and how it's set up for Google search.
+You probably get a lot of messages, so this will only take 30s.
 
-Put together an example addressing both: https://real-estate-websual.vercel.app
+We noticed your website could use a design refresh and better SEO - both are likely costing you leads. We can fix that.
 
-Here's a similar project we recently finished for another client, for reference: https://websual-christopher.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-Let me know if it's worth a quick conversation, or feel free to ignore if it's not a priority right now.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency

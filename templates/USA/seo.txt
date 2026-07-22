@@ -1,14 +1,15 @@
-Subject: {company_name} and Google search
+Subject: Your company's website isn't showing up on Google
 
-Hi {first_name},
+Hey {first_name},
 
-Was doing some research on realtors in {city} and noticed {company_name}'s site isn't showing up well for searches buyers actually use, like "homes for sale in {city}."
+You probably get a lot of messages, so this will only take 30s.
 
-Put together a quick example of a more search-optimized layout, if you want to see what that could look like: https://real-estate-websual.vercel.app
+We noticed your website isn't set up to show up on Google search - which means you're likely missing out on people actively looking for an agent in your area. We can fix that.
 
-Here's a similar project we recently delivered for another client, 
-Website: https://websual-christopher.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-No pressure either way, just thought it might be worth a look.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency

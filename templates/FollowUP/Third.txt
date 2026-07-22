@@ -1,0 +1,15 @@
+Subject: No pitch, just a quick look - {first_name}
+
+Hi {first_name},
+
+Even if we don't end up working together, seeing what a modern rebuild of your site could look like should still be useful from a clarity standpoint.
+
+Here's the past client work: 
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
+
+Happy to share more, or pause here - whatever works best for you.
+
+Best regards,
+Websual
+https://www.websual.agency

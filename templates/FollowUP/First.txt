@@ -1,14 +1,10 @@
-Subject: Following up on {company_name}'s website examples
+Subject: Quick check - {first_name}
 
 Hi {first_name},
 
-Wanted to follow up on the examples I sent over for {company_name}. I know things get busy, so no worries if it slipped down the inbox.
+Just checking in to see if our previous note reached you.
 
-If you've had a chance to look through them, I'd love to hear your thoughts and if there's anything you'd want adjusted (layout, colors, sections, anything at all), happy to refine it to better fit what you have in mind.
-
-If it's easier to just chat it through, here's a quick Teams link: https://teams.live.com/l/invite/FEAh-KuYc7gurhZvQ?v=g1
-
-Either way, would love to hear from you.
+Would it make sense to take a quick look at your website's design/SEO, or should we circle back later?
 
 Best regards,
 Websual

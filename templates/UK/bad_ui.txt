@@ -1,13 +1,15 @@
-Subject: {company_name}'s website — a quick observation
+Subject: We won't waste your time
 
-Hi {first_name},
+Hey {first_name},
 
-I was browsing realtors in {city} and landed on {company_name}'s site. The design felt a bit dated compared to what buyers typically expect these days, which might be quietly turning people away.
+You probably get a lot of messages, so this will only take 30s.
 
-Mocked up a quick example of a more modern take, if you're curious: https://real-estate-websual.vercel.app
+We noticed your website's design isn't doing your business justice - likely costing you leads. We can fix that.
 
-Here's a similar project we recently completed for another realtor: https://websual-christopher.vercel.app
+Here's an example of the kind of rebuild we have done recently for our clients:
+Website-1: https://brent-christopher.vercel.app
+Website-2: https://real-estate-find.vercel.app
 
-Totally fine if it's not something you're looking into, just wanted to share.
+We'd really appreciate a yes or no if this is something you'd be interested in.
 
 Best regards, Websual https://www.websual.agency
